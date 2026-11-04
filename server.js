@@ -9,6 +9,7 @@ const { Server } = require('socket.io');
 const store = require('./lib/store');
 const { buildReport, publicEvent } = require('./lib/analytics');
 const sim = require('./lib/simulator');
+const passive = require('./lib/passive');
 
 const PORT = Number(process.env.PORT) || 3000;
 const ADMIN_PIN = process.env.ADMIN_PIN || ''; // optional: protect admin screens
@@ -75,6 +76,7 @@ function summary(ev) {
       participants: Object.keys(ev.participants).filter(k => k !== 'presenter').length, online: online(ev.code),
       ratings: ev.ratings.length, messages: ev.messages.length, reactions: ev.reactions.length,
       avg: ev.lastPulse?.avg ?? null,
+      attention: ev.lastPulse?.passive?.index ?? null, cameraOptIns: passive.consentCount(ev),
     },
     simulating: sim.running(ev.code),
   };
@@ -102,10 +104,12 @@ app.post('/api/events', checkPin, (req, res) => {
     settings: {
       chat: b.settings?.chat !== false, qa: b.settings?.qa !== false, reactions: b.settings?.reactions !== false,
       publicReport: !!b.settings?.publicReport, showCrowdMood: b.settings?.showCrowdMood !== false,
+      // passive signals: tab focus is on by default; cameras and the room microphone are opt-in by the host
+      passiveTab: b.settings?.passiveTab !== false, passiveCamera: !!b.settings?.passiveCamera, passiveRoom: !!b.settings?.passiveRoom,
     },
     status: 'scheduled', createdAt: Date.now(), startedAt: null, endedAt: null,
     participants: {}, ratings: [], reactions: [], messages: [], questions: [], polls: [], feedback: {},
-    pulseHistory: [], markers: [], announcements: [],
+    pulseHistory: [], markers: [], announcements: [], passive: [], passiveLatest: {}, roomSignals: [],
   };
   store.events[code] = ev; store.save();
   res.json(summary(ev));
@@ -138,6 +142,7 @@ app.post('/api/events/:code/duplicate', checkKey, (req, res) => {
   Object.assign(copy, {
     code, adminKey: uid() + uid(), title: src.title + ' (copy)', status: 'scheduled', createdAt: Date.now(), startedAt: null, endedAt: null,
     participants: {}, ratings: [], reactions: [], messages: [], questions: [], polls: [], feedback: {}, pulseHistory: [], markers: [], announcements: [],
+    passive: [], passiveLatest: {}, roomSignals: [],
   });
   delete copy.lastPulse;
   store.events[code] = copy; store.save();
@@ -178,6 +183,9 @@ app.get('/api/events/:code/export.csv', checkKey, (req, res) => {
   ev.messages.filter(m => !m.deleted).forEach(m => rows.push(['chat', Math.round((m.t - s) / 1000), m.name, m.text, m.pinned ? 'pinned' : '']));
   ev.questions.forEach(q => rows.push(['question', Math.round((q.t - s) / 1000), q.name, q.text, `${q.votes.length} votes`]));
   ev.pulseHistory.forEach(p => rows.push(['crowd_pulse', Math.round((p.t - s) / 1000), '', p.avg, `${p.online} online`]));
+  // passive signals are exported as crowd-level figures only, never per person
+  ev.pulseHistory.filter(p => p.att != null || p.focus != null).forEach(p => rows.push(['crowd_attention', Math.round((p.t - s) / 1000), '', p.att,
+    `tab_focus=${p.focus ?? ''}; camera_attention=${p.cam ?? ''}; positive=${p.pos ?? ''}; fatigue=${p.fat ?? ''}; room_attention=${p.room ?? ''}; laughter=${p.laugh ?? ''}; applause=${p.clap ?? ''}`]));
   Object.entries(ev.feedback).forEach(([pid, f]) => rows.push(['feedback', '', name(pid), f.stars, `nps=${f.nps}; word=${f.word}; ${f.comment || ''}`]));
   res.type('text/csv').attachment(`crowdpulse-${ev.code}.csv`).send(rows.map(r => r.map(esc).join(',')).join('\n'));
 });
@@ -276,7 +284,11 @@ const actions = {
   },
 };
 
-const simApi = { ...actions, get: getEvent, onChange: code => { const ev = getEvent(code); if (ev) broadcastEvent(ev); } };
+const simApi = {
+  ...actions, get: getEvent, onChange: code => { const ev = getEvent(code); if (ev) broadcastEvent(ev); },
+  passive(code, pid, p) { const ev = getEvent(code); if (ev?.status === 'live') passive.record(ev, pid, p); },
+  room(code, r) { const ev = getEvent(code); if (ev?.status === 'live') passive.recordRoom(ev, r); },
+};
 
 function questionsView(ev) {
   return ev.questions.filter(q => !q.hidden).map(q => ({ id: q.id, name: q.name, avatar: q.avatar, text: q.text, t: q.t, votes: q.votes.length, voters: q.votes, answered: q.answered }))
@@ -336,11 +348,12 @@ setInterval(() => {
       t: now, avg: avg == null ? null : Math.round(avg * 10) / 10, n: vals.length, online: onlineN, dist, energy,
       rpm: recentReacts, mpm: recentMsgs, momentum: avg != null && prev?.avg != null ? Math.round((avg - prev.avg) * 10) / 10 : 0,
       elapsed: now - ev.startedAt,
+      passive: passive.aggregate(ev, onlineMap, now),
     };
     ev.lastPulse = pulse;
     io.to(ev.code).emit('pulse', pulse);
     if (tickNo % 5 === 0) {
-      const point = { t: now, avg: pulse.avg, n: pulse.n, online: onlineN, energy };
+      const point = { t: now, avg: pulse.avg, n: pulse.n, online: onlineN, energy, ...passive.historyFields(pulse.passive) };
       ev.pulseHistory.push(point);
       io.to(ev.code).emit('history-point', point);
       io.to('admin:' + ev.code).emit('admin-summary', summary(ev));
@@ -380,6 +393,13 @@ io.on('connection', socket => {
   socket.on('ask', text => ctx.pid && actions.ask(ctx.code, ctx.pid, text));
   socket.on('vote-q', qid => ctx.pid && actions.voteQuestion(ctx.code, ctx.pid, qid));
   socket.on('poll-vote', p => ctx.pid && actions.pollVote(ctx.code, ctx.pid, p?.pollId, Number(p?.idx)));
+  // passive signals from an attendee's own device (numbers only; see lib/passive.js)
+  socket.on('passive', p => {
+    if (!ctx.pid || ctx.admin) return; const ev = getEvent(ctx.code); if (!ev || ev.status !== 'live') return;
+    if (throttled(ctx.code, ctx.pid, 'passive', 1500)) return;
+    passive.record(ev, ctx.pid, p || {}); store.save();
+  });
+  socket.on('passive-off', () => { const ev = getEvent(ctx.code); if (ev && ctx.pid) { passive.stopCamera(ev, ctx.pid); store.save(); } });
   socket.on('feedback', (f, ack) => { if (ctx.pid) { actions.feedback(ctx.code, ctx.pid, f || {}); ack?.({ ok: true }); } });
   socket.on('typing', () => ctx.pid && socket.to(ctx.code).emit('typing', { name: getEvent(ctx.code)?.participants[ctx.pid]?.name }));
 
@@ -414,7 +434,7 @@ io.on('connection', socket => {
   admin('admin:reopen', ev => { ev.status = 'live'; ev.endedAt = null; broadcastEvent(ev); });
   admin('admin:reset', ev => {
     Object.assign(ev, { status: 'scheduled', startedAt: null, endedAt: null, ratings: [], reactions: [], messages: [], questions: [], polls: [],
-      feedback: {}, pulseHistory: [], markers: [], announcements: [], latest: {}, lastPulse: null });
+      feedback: {}, pulseHistory: [], markers: [], announcements: [], latest: {}, lastPulse: null, passive: [], passiveLatest: {}, roomSignals: [] });
     broadcastEvent(ev); emitPolls(ev); emitQuestions(ev); io.to(ev.code).emit('reset');
   });
   admin('admin:settings', (ev, p) => { ev.settings = { ...ev.settings, ...p }; broadcastEvent(ev); });
@@ -454,6 +474,8 @@ io.on('connection', socket => {
     ev.announcements.push(a); io.to(ev.code).emit('announce', a);
   });
   admin('admin:confetti', ev => io.to(ev.code).emit('confetti'));
+  // the presenter device's room reading: face counts from its camera, laughter/applause from its microphone
+  admin('admin:room', (ev, p) => { if (ev.status === 'live' && !throttled(ev.code, 'presenter', 'room', 800)) passive.recordRoom(ev, p); });
   admin('admin:simulate', (ev, p) => {
     if (p.on) sim.start(ev.code, simApi, Math.max(3, Math.min(150, Number(p.count) || 24)));
     else sim.stop(ev.code, simApi);

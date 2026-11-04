@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Session Report · CrowdPulse</title>
+<meta name="theme-color" content="#07051a">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .hero { display: grid; grid-template-columns: 1fr auto; gap: 30px; align-items: center; margin: 10px 0 26px; }
+  .grade { width: 210px; height: 210px; position: relative; }
+  .grade svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .grade .gl { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; }
+  .grade .letter { font-family: var(--display); font-size: 4.4rem; font-weight: 700; line-height: 1; opacity: 0; transform: scale(.3) rotate(-20deg); transition: all .9s cubic-bezier(.2,1.6,.4,1) .9s; }
+  .grade.in .letter { opacity: 1; transform: none; }
+  .grade .score { color: var(--muted); font-weight: 600; }
+  .grade circle.arc { transition: stroke-dasharray 1.8s cubic-bezier(.2,.9,.2,1) .2s; }
+  .sec { margin-top: 22px; }
+  .g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  .g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .g-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
+  .chart-box { position: relative; height: 280px; }
+  .chart-box.tall { height: 340px; }
+  .chart-box.short { height: 220px; }
+  .insights { display: grid; gap: 10px; }
+  .insight { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border-radius: 14px; background: rgba(0,0,0,.2); border: 1px solid var(--stroke); }
+  .insight .n { width: 26px; height: 26px; flex: none; border-radius: 8px; display: grid; place-items: center; background: var(--grad); font-weight: 700; font-size: .8rem; }
+  .moment { padding: 16px; border-radius: 16px; border: 1px solid var(--stroke); background: rgba(0,0,0,.2); }
+  .moment.peak { border-color: rgba(46,230,166,.4); } .moment.dip { border-color: rgba(255,92,122,.4); }
+  .moment .mh { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .moment .mv { font-family: var(--display); font-size: 1.6rem; font-weight: 700; }
+  .moment q { display: block; font-size: .85rem; color: var(--muted); margin-top: 4px; quotes: '“' '”'; }
+  .funnel { display: grid; gap: 10px; }
+  .funnel .fr { display: grid; grid-template-columns: 110px 1fr 60px; gap: 12px; align-items: center; font-size: .9rem; }
+  .funnel .bar { height: 26px; border-radius: 8px; background: rgba(255,255,255,.06); overflow: hidden; }
+  .funnel .bar div { height: 100%; width: 0; border-radius: 8px; background: var(--grad); transition: width 1.4s cubic-bezier(.2,.9,.2,1); }
+  .cloud { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 14px; padding: 16px 4px; min-height: 220px; }
+  .cloud span { font-family: var(--display); font-weight: 700; line-height: 1.1; opacity: 0; transform: scale(.6); transition: opacity .6s, transform .6s cubic-bezier(.2,1.6,.4,1); cursor: default; }
+  .cloud.in span { opacity: 1; transform: none; }
+  .cloud span:hover { transform: scale(1.12); }
+  .leader { display: grid; gap: 8px; }
+  .leader .lr { display: grid; grid-template-columns: 30px 38px 1fr auto; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 12px; background: rgba(0,0,0,.18); }
+  .leader .rank { font-family: var(--display); font-weight: 700; color: var(--muted); text-align: center; }
+  .leader .av { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; font-size: 1.3rem; background: color-mix(in srgb, var(--c) 30%, transparent); }
+  .comments { display: grid; gap: 10px; max-height: 420px; }
+  .comment { padding: 12px 14px; border-radius: 14px; background: rgba(0,0,0,.2); border-left: 3px solid var(--c); }
+  .chapters table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  .chapters td, .chapters th { padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--stroke); }
+  .chapters th { color: var(--muted); font-weight: 600; font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; }
+  .mini-bar { height: 8px; border-radius: 4px; background: rgba(255,255,255,.08); overflow: hidden; min-width: 80px; }
+  .mini-bar div { height: 100%; border-radius: 4px; }
+  .nps-big { font-family: var(--display); font-size: 3.4rem; font-weight: 700; text-align: center; line-height: 1; }
+  .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
+  .zone-strip { display: flex; height: 38px; border-radius: 12px; overflow: hidden; margin-top: 8px; }
+  .zone-strip div { display: grid; place-items: center; font-size: .8rem; font-weight: 700; color: #07051a; transition: flex 1.2s cubic-bezier(.2,.9,.2,1); flex: 0; min-width: 0; overflow: hidden; }
+  @media (max-width: 960px) { .g2, .g3, .g-2-1 { grid-template-columns: 1fr; } .hero { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
+  @media print {
+    body { background: #0b0820 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .topbar, .toolbar, #backdrop, .grain { display: none !important; }
+    .card { break-inside: avoid; backdrop-filter: none; }
+    .reveal { opacity: 1 !important; transform: none !important; }
+  }
+</style>
+</head>
+<body>
+<header class="topbar"><span id="brand"></span><span class="pill">REPORT</span><span class="spacer"></span>
+  <div class="toolbar"><button class="btn sm" id="print">🖨️ PDF</button><a class="btn sm hidden" id="csv">⬇ CSV</a><button class="btn sm" id="json">{ } JSON</button><a class="btn sm hidden" id="back">🎛️ Control room</a></div>
+</header>
+<main class="wrap" id="root"><div class="empty" style="margin-top:20vh"><span class="big spin" style="display:inline-block">✨</span><br>Crunching the numbers…</div></main>
+<script src="/vendor/chart.js/chart.umd.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/report.js"></script>
+</body>
+</html>

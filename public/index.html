@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CrowdPulse</title>
+<meta name="theme-color" content="#07051a">
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; min-height: calc(100vh - 140px); }
+  .hero p.lead { font-size: 1.15rem; color: var(--muted); max-width: 540px; margin: 18px 0 28px; }
+  .code-boxes { display: flex; gap: 8px; }
+  .code-boxes input {
+    width: 54px; height: 64px; text-align: center; font-family: var(--display); font-size: 1.8rem; font-weight: 700; text-transform: uppercase;
+    border-radius: 14px; border: 1px solid var(--stroke-2); background: rgba(0,0,0,.3); outline: none; transition: all .2s;
+  }
+  .code-boxes input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 30%, transparent); transform: translateY(-2px); }
+  .code-boxes input.filled { border-color: var(--accent-2); background: color-mix(in srgb, var(--accent) 14%, transparent); }
+  .features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-top: 30px; }
+  .feature .ico { font-size: 1.8rem; width: 52px; height: 52px; border-radius: 16px; display: grid; place-items: center; background: var(--panel-2); margin-bottom: 12px; }
+  .feature p { color: var(--muted); margin: 6px 0 0; font-size: .92rem; }
+  .demo-phone { width: min(340px, 100%); margin: 0 auto; border-radius: 40px; padding: 18px; border: 1px solid var(--stroke-2); background: linear-gradient(160deg, rgba(255,255,255,.09), rgba(255,255,255,.02)); box-shadow: 0 40px 120px -30px rgba(124,92,255,.6); animation: bob 6s ease-in-out infinite; }
+  @keyframes bob { 50% { transform: translateY(-14px) rotate(-1deg); } }
+  .demo-row { display: flex; justify-content: space-around; font-size: 1.6rem; margin-top: 10px; }
+  .demo-row span { transition: transform .3s, filter .3s; filter: grayscale(.8) opacity(.5); }
+  .demo-row span.on { transform: scale(1.4); filter: none; }
+  @media (max-width: 880px) { .hero { grid-template-columns: 1fr; min-height: auto; padding-top: 20px; } .code-boxes input { width: 44px; height: 56px; font-size: 1.5rem; } }
+  @media (max-width: 380px) { .code-boxes { gap: 5px; } .code-boxes input { width: 38px; height: 50px; } }
+</style>
+</head>
+<body>
+<header class="topbar"><span id="brand"></span><span class="spacer"></span><a class="btn sm" href="/admin">🎤 Host dashboard</a></header>
+<main class="wrap">
+  <section class="hero">
+    <div>
+      <div class="eyebrow">Real-time audience intelligence</div>
+      <h1 style="margin-top:12px">Feel the room.<br><span class="gradient-text">Live.</span></h1>
+      <p class="lead">Your audience rates your session as it happens — with sliders, smileys, dials, weather and more. Live chat, Q&amp;A, polls and emoji storms, then a stunning report when the lights come up.</p>
+      <form id="join" class="card glow" style="max-width:520px">
+        <div class="eyebrow" style="margin-bottom:12px">Joining a session? Enter your code</div>
+        <div class="code-boxes" id="boxes"></div>
+        <div class="row" style="margin-top:16px"><button class="btn primary" style="flex:1">Join session →</button></div>
+        <div class="dim" style="font-size:.8rem;margin-top:10px">Or just scan the QR code on the presenter's screen 📱</div>
+      </form>
+    </div>
+    <div>
+      <div class="demo-phone">
+        <div class="row"><span class="pill live">LIVE</span><span class="spacer"></span><span class="dim" style="font-size:.8rem">128 in the room</span></div>
+        <div id="demoGauge" style="margin-top:16px"></div>
+        <div class="demo-row" id="demoFaces"><span>😫</span><span>😕</span><span>😐</span><span>🙂</span><span>🤩</span></div>
+        <canvas id="demoChart" style="width:100%;height:120px;margin-top:14px"></canvas>
+      </div>
+    </div>
+  </section>
+  <section class="features">
+    <div class="card feature reveal"><div class="ico">🎚️</div><h3>8 ways to rate</h3><p>Slider, smileys, stars, rotary dial, weather, thermometer, emoji wheel and thumbs — every attendee picks their favourite.</p></div>
+    <div class="card feature reveal"><div class="ico">📈</div><h3>Live mood telemetry</h3><p>A spring-loaded gauge, streaming pulse line, mood distribution and energy meter, updated every second.</p></div>
+    <div class="card feature reveal"><div class="ico">💬</div><h3>Chat, Q&amp;A, polls</h3><p>Talk with the room, upvote the best questions, and fire off instant polls with animated results.</p></div>
+    <div class="card feature reveal"><div class="ico">🎆</div><h3>Reaction storms</h3><p>Applause, fire and mind-blown emoji float across every screen — and the big-screen stage view.</p></div>
+    <div class="card feature reveal"><div class="ico">📍</div><h3>Chapter markers</h3><p>Drop markers as you move through sections and see exactly which parts landed.</p></div>
+    <div class="card feature reveal"><div class="ico">🏆</div><h3>Post-show report</h3><p>Grades, NPS, key moments, word clouds, sentiment, engagement funnel and CSV export.</p></div>
+  </section>
+</main>
+<script src="/js/common.js"></script>
+<script>
+  const { $, $$ } = CP;
+  CP.backdrop();
+  $('#brand').outerHTML = CP.brand;
+  CP.reveal();
+
+  // code boxes
+  const boxes = $('#boxes');
+  for (let i = 0; i < 6; i++) boxes.insertAdjacentHTML('beforeend', `<input maxlength="1" autocomplete="off" inputmode="text" aria-label="Code character ${i + 1}">`);
+  const ins = $$('input', boxes);
+  ins.forEach((inp, i) => {
+    inp.addEventListener('input', () => {
+      inp.value = inp.value.replace(/[^a-z0-9]/gi, '').toUpperCase();
+      inp.classList.toggle('filled', !!inp.value);
+      if (inp.value && ins[i + 1]) ins[i + 1].focus();
+      if (ins.every(x => x.value)) $('#join').requestSubmit();
+    });
+    inp.addEventListener('keydown', e => { if (e.key === 'Backspace' && !inp.value && ins[i - 1]) ins[i - 1].focus(); });
+    inp.addEventListener('paste', e => {
+      e.preventDefault(); const t = (e.clipboardData.getData('text') || '').replace(/[^a-z0-9]/gi, '').toUpperCase().slice(0, 6);
+      [...t].forEach((c, j) => { ins[j].value = c; ins[j].classList.add('filled'); }); ins[Math.min(5, t.length)].focus();
+      if (t.length === 6) $('#join').requestSubmit();
+    });
+  });
+  ins[0].focus();
+  $('#join').addEventListener('submit', async e => {
+    e.preventDefault();
+    const code = ins.map(x => x.value).join('');
+    if (code.length < 6) { $('#join').classList.add('shake'); setTimeout(() => $('#join').classList.remove('shake'), 500); return; }
+    const r = await fetch('/api/events/' + code + '/public');
+    if (!r.ok) { CP.toast('🤔 No session found with code ' + code); $('#join').classList.add('shake'); setTimeout(() => $('#join').classList.remove('shake'), 500); return; }
+    location.href = '/e/' + code;
+  });
+
+  // hero demo animation
+  const g = CP.gauge($('#demoGauge'));
+  const chart = CP.pulseChart($('#demoChart'), { windowMs: 60000, showOnline: false });
+  const faces = $$('#demoFaces span');
+  let t = 0;
+  const now = Date.now();
+  for (let i = 60; i > 0; i--) chart.push({ t: now - i * 1000, avg: 62 + 20 * Math.sin((60 - i) / 9), online: 120 });
+  setInterval(() => {
+    t++;
+    const v = Math.max(5, Math.min(97, 62 + 20 * Math.sin((60 + t) / 9) + (Math.random() * 8 - 4)));
+    g.set(v); chart.push({ t: Date.now(), avg: v, online: 120 });
+    faces.forEach((f, i) => f.classList.toggle('on', i === Math.min(4, Math.floor(v / 20))));
+    if (Math.random() < .35) CP.floatEmoji(['👏', '🔥', '🤯', '❤️', '😂'][Math.floor(Math.random() * 5)], { x: 55 + Math.random() * 40, size: 1.6 });
+  }, 1000);
+</script>
+</body>
+</html>

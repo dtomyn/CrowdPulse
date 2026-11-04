@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# App data (sessions, ratings, chat) — local and private
+data/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+npm-debug.log*
+
+# Explainer film: render cache, generated voice lines and large videos
+film/.cache/
+film/vo/*.wav
+film/vo/made.json
+film/out/*.mp4
+film/out/timeline.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Local Claude Code settings
+.claude/settings.local.json
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.swp

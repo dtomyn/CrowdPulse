@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CrowdPulse Explainer Director</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  html, body { margin: 0; width: 1600px; height: 900px; overflow: hidden; background: #05030f; }
+  #stage { position: relative; width: 1600px; height: 900px; overflow: hidden; }
+  #cam { position: absolute; left: 0; top: 0; width: 1600px; height: 900px; transform-origin: 0 0; will-change: transform; }
+
+  /* set backdrop */
+  #bg { position: absolute; inset: -400px; background: radial-gradient(1200px 700px at 30% 20%, #1a1150 0%, transparent 60%), radial-gradient(900px 600px at 80% 80%, #0d3a4a 0%, transparent 60%), #07051a; }
+  #bg .blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; }
+  #bg .b1 { width: 700px; height: 700px; left: 300px; top: 250px; background: #7c5cff; animation: drift1 26s ease-in-out infinite; }
+  #bg .b2 { width: 600px; height: 600px; left: 1200px; top: 350px; background: #ff5ca8; animation: drift2 30s ease-in-out infinite; opacity: .4; }
+  #bg .b3 { width: 650px; height: 650px; left: 800px; top: 900px; background: #2ee6d6; animation: drift1 34s ease-in-out infinite reverse; opacity: .3; }
+  #bg .grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 48px 48px; mask-image: radial-gradient(circle at 50% 50%, black, transparent 75%); }
+  @keyframes drift1 { 50% { transform: translate(160px, -90px) scale(1.15); } }
+  @keyframes drift2 { 50% { transform: translate(-200px, 80px) scale(.9); } }
+
+  .dev { position: absolute; left: 0; top: 0; transform-origin: 0 0; opacity: 0; }
+  .dev iframe { border: 0; display: block; background: #07051a; }
+  #d-full iframe { width: 1600px; height: 900px; }
+  #d-browser { width: 1440px; border-radius: 18px; overflow: hidden; box-shadow: 0 60px 140px -30px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.14), 0 0 120px -40px rgba(124,92,255,.6); background: #0f0b2a; }
+  #d-browser .bar { height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 16px; background: linear-gradient(#1d1745, #151036); border-bottom: 1px solid rgba(255,255,255,.08); }
+  #d-browser .dot { width: 12px; height: 12px; border-radius: 50%; }
+  #d-browser .url { margin-left: 18px; flex: 0 1 560px; height: 26px; border-radius: 8px; background: rgba(0,0,0,.35); color: #b9b4e0; font: 500 13px/26px Inter, sans-serif; padding: 0 12px; }
+  #d-browser iframe { width: 1440px; height: 900px; }
+  #d-phone { width: 418px; height: 872px; padding: 14px; border-radius: 64px; background: linear-gradient(145deg, #3b3568, #15112f 40%, #2a2453); box-shadow: 0 70px 140px -30px rgba(0,0,0,.9), inset 0 0 0 2px rgba(255,255,255,.18), 0 0 140px -30px rgba(255,92,168,.55); }
+  #d-phone iframe { width: 390px; height: 844px; border-radius: 50px; }
+  #d-phone .notch { position: absolute; left: 50%; top: 24px; width: 118px; height: 32px; border-radius: 20px; background: #000; transform: translateX(-50%); z-index: 2; }
+
+  /* side panel (phone layout) */
+  #side { position: absolute; left: 130px; top: 0; width: 780px; height: 900px; display: flex; flex-direction: column; justify-content: center; opacity: 0; }
+  #side .kicker { font: 700 15px Inter, sans-serif; letter-spacing: .2em; text-transform: uppercase; color: #a7a3c9; }
+  #side h2 { font-family: 'Space Grotesk', sans-serif; font-size: 64px; line-height: 1.02; margin: 14px 0 26px; letter-spacing: -.03em; }
+  #side .items { display: grid; gap: 14px; }
+  #side .item { display: flex; align-items: center; gap: 16px; font: 600 24px Inter, sans-serif; color: #d9d5ff; padding: 14px 20px; border-radius: 18px; background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); opacity: 0; transform: translateX(-30px); transition: opacity .6s, transform .7s cubic-bezier(.2,1.3,.4,1), background .4s, border-color .4s, color .4s; }
+  #side .item.in { opacity: 1; transform: none; }
+  #side .item.on { background: linear-gradient(120deg, rgba(124,92,255,.55), rgba(255,92,168,.4)); border-color: rgba(255,255,255,.35); color: #fff; transform: translateX(14px) scale(1.04); box-shadow: 0 20px 50px -20px #ff5ca8; }
+  #side .item .ic { font-size: 30px; width: 40px; text-align: center; }
+  #side.grid8 .items { grid-template-columns: 1fr 1fr; }
+
+  /* overlay */
+  #ov { position: absolute; inset: 0; pointer-events: none; }
+  #chapter { position: absolute; left: 64px; bottom: 56px; display: flex; align-items: flex-end; gap: 22px; opacity: 0; }
+  #chapter::before { content: ''; position: absolute; left: -90px; right: -140px; top: -70px; bottom: -70px; z-index: -1; background: radial-gradient(closest-side, rgba(5,3,15,.88), rgba(5,3,15,.55) 60%, transparent); filter: blur(6px); }
+  #chapter .num { font: 700 92px/0.8 'Space Grotesk', sans-serif; background: linear-gradient(120deg, #7c5cff, #ff5ca8 55%, #ffb547); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  #chapter .txt { padding-bottom: 4px; }
+  #chapter .k { font: 700 13px Inter, sans-serif; letter-spacing: .24em; text-transform: uppercase; color: #a7a3c9; }
+  #chapter .t { font: 700 40px/1.1 'Space Grotesk', sans-serif; letter-spacing: -.02em; color: #fff; text-shadow: 0 6px 30px rgba(0,0,0,.6); }
+  #chapter .rule { position: absolute; left: 0; right: 0; bottom: -14px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, #7c5cff, #ff5ca8, transparent); transform-origin: 0 0; }
+
+  .callout { position: absolute; left: 0; top: 0; padding: 12px 18px; border-radius: 16px; background: rgba(12,8,36,.88); border: 1px solid rgba(255,255,255,.22); color: #fff; font: 600 20px Inter, sans-serif; white-space: nowrap; box-shadow: 0 20px 50px -14px rgba(0,0,0,.8), 0 0 40px -10px rgba(255,92,168,.6); backdrop-filter: blur(10px); }
+  .callout::before { content: ''; position: absolute; width: 14px; height: 14px; border-radius: 50%; background: #ff5ca8; box-shadow: 0 0 0 6px rgba(255,92,168,.25); left: -30px; top: 50%; margin-top: -7px; }
+  .callout.right::before { left: auto; right: -30px; }
+  .callout.top::before, .callout.bottom::before { display: none; }
+  .ring { position: absolute; border-radius: 22px; border: 3px solid #ff5ca8; box-shadow: 0 0 0 6px rgba(255,92,168,.18), 0 0 40px rgba(255,92,168,.6); }
+
+  #cursor { position: absolute; left: 0; top: 0; width: 34px; height: 34px; opacity: 0; filter: drop-shadow(0 6px 10px rgba(0,0,0,.6)); }
+  .ripple { position: absolute; width: 70px; height: 70px; margin: -35px 0 0 -35px; border-radius: 50%; border: 3px solid rgba(255,255,255,.9); animation: rip .55s ease-out forwards; }
+  @keyframes rip { from { transform: scale(.2); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
+
+  #title { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; opacity: 0; background: radial-gradient(circle at 50% 45%, rgba(30,20,80,.75), rgba(5,3,15,.96) 70%); }
+  #title .mark { width: 120px; height: 120px; border-radius: 36px; margin: 0 auto 30px; display: grid; place-items: center; background: linear-gradient(120deg, #7c5cff, #ff5ca8 55%, #ffb547); box-shadow: 0 0 90px -10px #ff5ca8; }
+  #title .mark svg { width: 70px; height: 70px; }
+  #title h1 { font: 700 120px/1 'Space Grotesk', sans-serif; letter-spacing: -.04em; margin: 0; }
+  #title p { font: 500 30px Inter, sans-serif; color: #c9c4f0; margin: 22px 0 0; }
+  #title .cmd { display: inline-block; margin-top: 34px; font: 600 26px ui-monospace, Consolas, monospace; padding: 16px 28px; border-radius: 16px; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.2); color: #fff; }
+  #title .cmd b { color: #2ee6d6; }
+  #title .line { opacity: 0; transform: translateY(26px); transition: opacity .8s, transform 1s cubic-bezier(.2,1.2,.4,1); }
+  #title.in .line { opacity: 1; transform: none; }
+  #title .l2 { transition-delay: .25s; } #title .l3 { transition-delay: .5s; } #title .l4 { transition-delay: .8s; }
+  #flash { position: absolute; inset: 0; background: white; opacity: 0; }
+  #vignette { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(0,0,0,.45)); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="cam">
+    <div id="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="grid"></div></div>
+    <div id="side"><div class="kicker"></div><h2></h2><div class="items"></div></div>
+    <div class="dev" id="d-full"><iframe id="f-full" name="full"></iframe></div>
+    <div class="dev" id="d-browser"><div class="bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="url" id="url">localhost:3000</span></div><iframe id="f-desk" name="desk"></iframe></div>
+    <div class="dev" id="d-phone"><div class="notch"></div><iframe id="f-phone" name="phone"></iframe></div>
+  </div>
+  <div id="ov">
+    <div id="vignette"></div>
+    <div id="chapter"><div class="num"></div><div class="txt"><div class="k"></div><div class="t"></div></div><div class="rule"></div></div>
+    <div id="callouts"></div>
+    <div id="title"></div>
+    <svg id="cursor" viewBox="0 0 24 24"><path d="M4 2.5l15 8.6-6.6 1.6 3.8 7.1-2.7 1.4-3.8-7.1L4.6 18.6z" fill="#fff" stroke="#0b0820" stroke-width="1.4" stroke-linejoin="round"/></svg>
+    <div id="flash"></div>
+  </div>
+</div>
+<script src="/studio/fakeserver.js"></script>
+<script src="/studio/director.js"></script>
+</body>
+</html>

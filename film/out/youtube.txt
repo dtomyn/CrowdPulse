@@ -1,26 +1,29 @@
 TITLE
-Let Your Audience Rate Your Talk Live – CrowdPulse Walkthrough (QR Join, Live Mood Graphs, Reports)
+Know How Your Talk Is Landing, Live – CrowdPulse Walkthrough (Live Ratings + Passive Attention Signals)
 
 ALTERNATIVE TITLES
-Feel the Room, Live: Real-Time Audience Ratings for Talks & Workshops | CrowdPulse
-How to Get Live Audience Feedback While You Present (Full Walkthrough)
+Feel the Room, Live: Real-Time Audience Ratings and Attention for Talks & Workshops | CrowdPulse
+What Your Audience Says vs. What They Show: Live Feedback for Presenters (Full Walkthrough)
 
 DESCRIPTION
-What if you could see how your talk is landing while you give it?
+Your audience rates your talk five stars. But were they actually paying attention?
 
-CrowdPulse lets your audience rate your session live from their phones. You see the room's mood second by second, and when the lights come up you get a full report. This 4-minute walkthrough goes from creating a session to that final report.
+CrowdPulse shows you both, live. Attendees rate your session from their phones while it happens, and passive signals show what the room is doing without anyone pressing a button. When the lights come up, you get a report that lines up what people said with what they showed.
+
+This 4-minute walkthrough covers everything, from creating a session to the final report.
 
 What you'll see:
-• Create a session with a title, time and location: in person, virtual or hybrid
-• Get a QR code and 6-character join code. No app and no sign-up for attendees
+• Create a session in seconds: in person, virtual or hybrid, with a QR code and a 6-character join code
+• Attendees join from any phone, with no app and no sign-up
 • 8 ways to rate: slider, smileys, stars, a rotary dial, weather, a thermometer, thumbs and vibes
 • Emoji reaction storms that float across every screen, including the projector
 • Live chat, Q&A with upvotes, instant polls, and spotlighting a question on every screen
-• A control room with a live mood gauge, rating spread, energy, trend and chapter markers
-• A built-in coach that nudges you when the mood dips or spikes
-• Passive signals: tab focus, opt-in attendee cameras analysed on their own device, and a room sensor, compared with ratings as "said vs. shown"
-• End-of-session feedback: stars, Net Promoter Score and one-word reviews
-• A post-session report: grade, mood timeline, key moments, rating vs. attention, engagement funnel, word cloud, sentiment, NPS, plus PDF, CSV and JSON export
+• A control room with a live mood gauge, chapter markers and a coach that nudges you when the mood shifts
+• NEW: passive signals. Tab focus, opt-in attendee cameras and a room sensor combine into one attention index
+• NEW: "said vs. shown". When ratings stay high but attention drops, the coach flags it: polite, but distracted
+• A post-session report with a grade, mood timeline, key moments, rating vs. attention, laughter and applause peaks, word cloud, NPS, and PDF, CSV and JSON export
+
+Privacy by design: camera analysis runs on each attendee's own device and is strictly opt-in. Only three numbers are sent (attention, positive, fatigue). No video, images or audio ever leave the device, and crowd figures only appear once at least 5 people contribute.
 
 Chapters
 0:00 Intro
@@ -32,7 +35,7 @@ Chapters
 1:33 Reaction storms
 1:39 Chat, Q&A and polls
 1:56 Read the room: the control room and coach
-2:16 Passive signals: attention, said vs. shown
+2:16 Passive signals: attention and said vs. shown
 2:54 On the big screen
 3:02 Wrap up and feedback
 3:11 The report
@@ -40,7 +43,7 @@ Chapters
 
 Get started: run npm start, then open localhost:3000/admin. Attendees on the same Wi-Fi join by scanning the QR code.
 
-Everything in this video is the real application, recorded frame by frame. The audience in the demo is simulated, and the narration uses a synthetic voice (Kokoro text-to-speech). Camera-based signals are opt-in, run on the attendee's own device, and send only crowd-level numbers.
+Everything in this video is the real application, recorded frame by frame. The audience is simulated, and the narration uses a synthetic voice (Kokoro text-to-speech).
 
 TAGS
-audience feedback, audience attention, engagement analytics, live polling, audience engagement, presentation tips, real-time feedback, QR code, live Q&A, event app, workshop tools, public speaking, net promoter score, sentiment analysis, hybrid events, virtual events, Node.js, Socket.IO
+audience feedback, audience attention, engagement analytics, live polling, audience engagement, presentation tips, public speaking, real-time feedback, live Q&A, QR code, event app, workshop tools, hybrid events, virtual events, net promoter score, sentiment analysis, Node.js, Socket.IO

@@ -11,6 +11,8 @@
   let tab = 'rate', unread = { chat: 0, qa: 0, polls: 0 };
   let gauge = null, dist = null, chart = null;
   const socket = io({ transports: ['websocket', 'polling'] });
+  // passive signals (tab focus + opt-in on-device camera); see js/passive.js
+  const pv = CP.passive.init({ socket, code, onShowPanel: () => { if (!matchMedia('(min-width: 901px)').matches) setTab('rate'); } });
 
   const paintMe = () => { $('#meAv').textContent = me.avatar; $('#meBtn').style.setProperty('--c', me.color); $('#meName').textContent = me.name; };
   paintMe();
@@ -39,6 +41,7 @@
     $('#mobnav [data-tab=qa]').classList.toggle('hidden', !ev.settings.qa);
     $('#chatForm').classList.toggle('hidden', !ev.settings.chat || ev.status === 'ended');
     $('#askForm').classList.toggle('hidden', ev.status === 'ended');
+    pv.update(ev);
     renderMain(); renderChat(); renderQA(); renderPolls();
     if (state.announcement && Date.now() - state.announcement.t < 30000) banner(state.announcement.text);
   }
@@ -46,7 +49,7 @@
   function renderMain() {
     const ev = state.event, col = $('#mainCol');
     gauge = dist = chart = null; col.innerHTML = '';
-    if (ev.status === 'scheduled') return renderLobby(col);
+    if (ev.status === 'scheduled') { renderLobby(col); pv.mount(col); return; }
     if (ev.status === 'ended') return renderEnded(col);
 
     // LIVE
@@ -69,17 +72,20 @@
       col.appendChild(rb);
       $$('button', rb).forEach(b => b.onclick = () => { socket.emit('react', b.dataset.e); CP.burst(b, b.dataset.e, 4); try { navigator.vibrate?.(5); } catch { /* */ } });
     }
+    pv.mount(col); // optional "share attention" offer / camera panel (only when the host allows cameras)
 
     if (ev.settings.showCrowdMood) {
       const crowd = h(`<section class="card"><div class="card-title"><h3>The room right now</h3><span class="eyebrow" id="crowdN"></span></div>
         <div class="crowd"><div id="cGauge"></div><div><div id="cDist" style="height:130px"></div>
         <div class="mini-stats"><div><b id="sOnline">0</b><small>online</small></div><div><b id="sEnergy">0</b><small>energy</small></div><div><b id="sMom">–</b><small>trend</small></div></div></div></div>
         <div class="you-vs" id="youVs"></div>
+        <div class="pv-crowd" id="pvCrowd"></div>
         <canvas id="cChart" style="width:100%;height:150px;margin-top:14px"></canvas></section>`);
       col.appendChild(crowd);
       gauge = CP.gauge($('#cGauge', crowd)); dist = CP.distBars($('#cDist', crowd));
       chart = CP.pulseChart($('#cChart', crowd), { windowMs: 10 * 60 * 1000 });
       chart.setStart(ev.startedAt); chart.set(state.history); chart.markers(state.markers || []);
+      pv.crowdSlot($('#pvCrowd', crowd));
       if (state.pulse) onPulse(state.pulse);
     }
     renderPollPop();
@@ -265,7 +271,8 @@
     state.pulse = p;
     if (gauge) gauge.set(p.avg, p.avg == null ? 'Waiting for ratings' : `${CP.mood(p.avg).label} · ${p.n} rating${p.n === 1 ? '' : 's'}`);
     if (dist) dist.set(p.dist);
-    if (chart && p.avg != null) chart.live({ t: p.t, avg: p.avg, online: p.online });
+    if (chart && p.avg != null) chart.live({ t: p.t, avg: p.avg, online: p.online, att: p.passive?.index ?? null });
+    pv.paintCrowd(p.passive);
     const set = (id, v) => { const el = $('#' + id); if (el) el.textContent = v; };
     set('sOnline', p.online); set('sEnergy', p.energy);
     set('sMom', p.momentum > 0.5 ? '↗ ' + p.momentum : p.momentum < -0.5 ? '↘ ' + Math.abs(p.momentum) : '→');
@@ -323,10 +330,12 @@
       <label class="field">Display name<input class="input" id="pfName" maxlength="32" value="${esc(me.name)}"></label>
       <div class="field" style="margin-top:14px">Avatar<div class="avatar-grid">${CP.AVATARS.map(a => `<button type="button" class="${a === av ? 'on' : ''}">${a}</button>`).join('')}</div></div>
       <div class="field" style="margin-top:14px">Colour<div class="row wrap-row" style="gap:8px">${CP.COLORS.map(c => `<button type="button" data-c="${c}" style="width:30px;height:30px;border-radius:50%;background:${c};border:2px solid ${c === col ? '#fff' : 'transparent'};cursor:pointer"></button>`).join('')}</div></div>
-      <button class="btn primary" id="pfSave" style="width:100%;margin-top:20px">${first ? "Let's go →" : 'Save'}</button></div></div>`);
+      <button class="btn primary" id="pfSave" style="width:100%;margin-top:20px">${first ? "Let's go →" : 'Save'}</button>
+      <button type="button" class="pv-link" id="pfShare" style="display:block;margin:14px auto 0">🔒 What does this page share?</button></div></div>`);
     document.body.appendChild(m);
     $$('.avatar-grid button', m).forEach(b => b.onclick = () => { av = b.textContent; $$('.avatar-grid button', m).forEach(x => x.classList.toggle('on', x === b)); });
     $$('[data-c]', m).forEach(b => b.onclick = () => { col = b.dataset.c; $$('[data-c]', m).forEach(x => (x.style.borderColor = x === b ? '#fff' : 'transparent')); });
+    $('#pfShare', m).onclick = () => pv.infoSheet();
     $('#pfSave', m).onclick = () => {
       me = { ...me, name: $('#pfName', m).value.trim() || me.name, avatar: av, color: col };
       CP.saveProfile(me); paintMe(); socket.emit('profile', me); m.remove();

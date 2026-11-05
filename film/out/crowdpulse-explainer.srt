@@ -159,61 +159,117 @@ so later you can see which parts landed.
 And a built-in coach nudges you when the mood dips, or spikes.
 
 41
-00:02:16,872 --> 00:02:19,743
-The stage view puts it all up on the projector:
+00:02:16,872 --> 00:02:19,451
+CrowdPulse can also read the room passively.
 
 42
-00:02:19,743 --> 00:02:23,592
-the live gauge, the chat, the polls, and every single reaction.
+00:02:19,451 --> 00:02:23,613
+When the host allows it, attendees can choose to share their attention.
 
 43
-00:02:24,492 --> 00:02:26,480
-When you finish, end the session.
+00:02:24,513 --> 00:02:27,366
+Their camera is analysed on their own phone.
 
 44
-00:02:26,480 --> 00:02:28,649
-Every phone asks for a quick review:
+00:02:27,366 --> 00:02:28,923
+No video ever leaves it:
 
 45
-00:02:28,649 --> 00:02:33,047
-stars, how likely they are to recommend it, and one word that sums it up.
+00:02:28,923 --> 00:02:32,619
+just three numbers, for attention, positive, and fatigue.
 
 46
-00:02:33,947 --> 00:02:35,278
-Then comes the report.
+00:02:33,520 --> 00:02:37,635
+In the control room, the passive signals card blends tab focus,
 
 47
-00:02:35,278 --> 00:02:38,064
-A grade, a score, and the numbers that matter.
+00:02:37,635 --> 00:02:40,967
+cameras and a room sensor into one attention index,
 
 48
-00:02:39,147 --> 00:02:41,281
-The mood timeline shows every chapter,
+00:02:40,967 --> 00:02:43,972
+shown only once five or more people take part.
 
 49
-00:02:41,281 --> 00:02:44,203
-and key moments pick out the biggest peaks and dips,
+00:02:44,873 --> 00:02:48,273
+It also compares what people say with what they show.
 
 50
-00:02:44,203 --> 00:02:46,507
-with what people were saying at the time.
+00:02:48,273 --> 00:02:52,314
+When ratings stay high but attention slips, the coach flags it:
 
 51
-00:02:47,407 --> 00:02:52,292
-Then engagement, reactions, sentiment, a word cloud, and the Net Promoter Score.
+00:02:52,314 --> 00:02:53,790
+polite, but distracted.
 
 52
-00:02:56,807 --> 00:03:02,439
-Export it as a PDF, a CSV or JSON, and share it with your audience if you like.
+00:02:54,690 --> 00:02:57,561
+The stage view puts it all up on the projector:
 
 53
-00:03:03,339 --> 00:03:04,633
-That’s CrowdPulse.
+00:02:57,561 --> 00:03:01,410
+the live gauge, the chat, the polls, and every single reaction.
 
 54
-00:03:04,633 --> 00:03:08,803
-Run npm start, open the host dashboard, and feel the room.
+00:03:02,310 --> 00:03:04,298
+When you finish, end the session.
 
 55
-00:03:08,803 --> 00:03:09,162
+00:03:04,298 --> 00:03:06,467
+Every phone asks for a quick review:
+
+56
+00:03:06,467 --> 00:03:10,865
+stars, how likely they are to recommend it, and one word that sums it up.
+
+57
+00:03:11,765 --> 00:03:13,096
+Then comes the report.
+
+58
+00:03:13,096 --> 00:03:15,882
+A grade, a score, and the numbers that matter.
+
+59
+00:03:16,965 --> 00:03:19,099
+The mood timeline shows every chapter,
+
+60
+00:03:19,099 --> 00:03:22,021
+and key moments pick out the biggest peaks and dips,
+
+61
+00:03:22,021 --> 00:03:24,325
+with what people were saying at the time.
+
+62
+00:03:25,225 --> 00:03:29,354
+A passive signals section lines attention up against the ratings,
+
+63
+00:03:29,354 --> 00:03:31,323
+and finds where they disagreed:
+
+64
+00:03:31,323 --> 00:03:36,660
+engaged but critical in the deep dive, and polite but distracted during the results.
+
+65
+00:03:37,560 --> 00:03:42,445
+Then engagement, reactions, sentiment, a word cloud, and the Net Promoter Score.
+
+66
+00:03:46,960 --> 00:03:52,592
+Export it as a PDF, a CSV or JSON, and share it with your audience if you like.
+
+67
+00:03:53,492 --> 00:03:54,786
+That’s CrowdPulse.
+
+68
+00:03:54,786 --> 00:03:58,956
+Run npm start, open the host dashboard, and feel the room.
+
+69
+00:03:58,956 --> 00:03:59,315
 Live.

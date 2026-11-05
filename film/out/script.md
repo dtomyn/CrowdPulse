@@ -1,6 +1,6 @@
 # CrowdPulse explainer: narration script
 
-3:11 in all. Voice: Kokoro `af_heart` at speed 0.97 (the IRISIdeas explainer voice). Written by `film/render.py` from `film/studio/director.js`. To replace a line with a real recording, save it as `film/vo/recorded/<id>.wav`.
+4:01 in all. Voice: Kokoro `af_heart` at speed 0.97 (the IRISIdeas explainer voice). Written by `film/render.py` from `film/studio/director.js`. To replace a line with a real recording, save it as `film/vo/recorded/<id>.wav`.
 
 ## 0:00 Cold open
 
@@ -130,7 +130,23 @@
 
 `2:11` `room-3` And a built-in coach nudges you when the mood dips, or spikes.
 
-## 2:16 On the big screen
+## 2:16 Passive signals
+
+**Shows:** Tab focus, the opt-in attendee camera and its consent sheet, the control room Passive signals card, said vs. shown, and the distracted coach nudge
+
+**Camera:** Phone close-up on the consent sheet, then the control room card, the said-vs-shown meters, the coach alert and the dashed attention line
+
+**Sound:** Clicks
+
+`2:16` `passive-1` CrowdPulse can also read the room passively. When the host allows it, attendees can choose to share their attention.
+
+`2:24` `passive-2` Their camera is analysed on their own phone. No video ever leaves it: just three numbers, for attention, positive, and fatigue.
+
+`2:33` `passive-3` In the control room, the passive signals card blends tab focus, cameras and a room sensor into one attention index, shown only once five or more people take part.
+
+`2:44` `passive-4` It also compares what people say with what they show. When ratings stay high but attention slips, the coach flags it: polite, but distracted.
+
+## 2:54 On the big screen
 
 **Shows:** Stage view during the session: gauge, stats, chat ticker, chart and reactions
 
@@ -138,9 +154,9 @@
 
 **Sound:** Confetti burst
 
-`2:16` `stage-1` The stage view puts it all up on the projector: the live gauge, the chat, the polls, and every single reaction.
+`2:54` `stage-1` The stage view puts it all up on the projector: the live gauge, the chat, the polls, and every single reaction.
 
-## 2:24 Wrap up
+## 3:02 Wrap up
 
 **Shows:** End the session; the attendee feedback form: stars, NPS, detail ratings and one word
 
@@ -148,9 +164,9 @@
 
 **Sound:** Clicks, key taps, confetti
 
-`2:24` `end-1` When you finish, end the session. Every phone asks for a quick review: stars, how likely they are to recommend it, and one word that sums it up.
+`3:02` `end-1` When you finish, end the session. Every phone asks for a quick review: stars, how likely they are to recommend it, and one word that sums it up.
 
-## 2:33 The report
+## 3:11 The report
 
 **Shows:** Post-session report: grade, KPIs, timeline, insights, key moments, engagement, word cloud, NPS and exports
 
@@ -158,15 +174,17 @@
 
 **Sound:** Chime on the grade
 
-`2:33` `report-1` Then comes the report. A grade, a score, and the numbers that matter.
+`3:11` `report-1` Then comes the report. A grade, a score, and the numbers that matter.
 
-`2:39` `report-2` The mood timeline shows every chapter, and key moments pick out the biggest peaks and dips, with what people were saying at the time.
+`3:16` `report-2` The mood timeline shows every chapter, and key moments pick out the biggest peaks and dips, with what people were saying at the time.
 
-`2:47` `report-3` Then engagement, reactions, sentiment, a word cloud, and the Net Promoter Score.
+`3:25` `report-passive` A passive signals section lines attention up against the ratings, and finds where they disagreed: engaged but critical in the deep dive, and polite but distracted during the results.
 
-`2:56` `report-4` Export it as a PDF, a CSV or JSON, and share it with your audience if you like.
+`3:37` `report-3` Then engagement, reactions, sentiment, a word cloud, and the Net Promoter Score.
 
-## 3:03 Outro
+`3:46` `report-4` Export it as a PDF, a CSV or JSON, and share it with your audience if you like.
+
+## 3:53 Outro
 
 **Shows:** End card: how to start it
 
@@ -174,4 +192,4 @@
 
 **Sound:** Music resolves
 
-`3:03` `outro-1` That’s CrowdPulse. Run npm start, open the host dashboard, and feel the room. Live.
+`3:53` `outro-1` That’s CrowdPulse. Run npm start, open the host dashboard, and feel the room. Live.

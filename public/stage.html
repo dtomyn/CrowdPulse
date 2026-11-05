@@ -23,6 +23,9 @@
   .s-right { display: grid; grid-template-rows: auto 1fr; gap: 2vh; min-height: 0; }
   .s-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1vw; }
   .s-stats .kpi .v { font-size: clamp(1.6rem, 4vh, 3rem); }
+  .s-stats.has-att { grid-template-columns: repeat(4, 1fr); }
+  .s-stats .att-tile { animation: pop .6s cubic-bezier(.2,1.4,.4,1); }
+  .s-stats .att-tile .v { color: #7ff3ea; text-shadow: 0 0 24px rgba(46,230,214,.45); }
   .ticker { min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 1vh; mask-image: linear-gradient(to bottom, transparent, black 30%); }
   .ticker .msg .bubble { font-size: clamp(.9rem, 1.6vh, 1.25rem); }
   .s-chart { grid-column: 1 / -1; height: 22vh; width: 100%; }
@@ -54,6 +57,7 @@
       <div class="kpi" style="--kc:#2ee6d6"><div class="k">In the room</div><div class="v" id="kOnline">0</div></div>
       <div class="kpi" style="--kc:#ff5ca8"><div class="k">Energy</div><div class="v" id="kEnergy">0</div></div>
       <div class="kpi" style="--kc:#ffb547"><div class="k">Reactions / min</div><div class="v" id="kRpm">0</div></div>
+      <div class="kpi att-tile hidden" id="attTile" style="--kc:#2ee6d6"><div class="k">👁️ Attention</div><div class="v" id="kAtt">0</div></div>
     </div>
     <div class="ticker chat-list" id="ticker"></div>
   </div>
@@ -126,7 +130,11 @@
     bg.setMood(p.avg);
     CP.countUp($('#kOnline'), p.online, { dur: 600 }); CP.countUp($('#kEnergy'), p.energy, { dur: 600 }); CP.countUp($('#kRpm'), p.rpm, { dur: 600 });
     $('#timer').textContent = CP.fmtClock(p.elapsed);
-    if (p.avg != null) chart.live({ t: p.t, avg: p.avg, online: p.online });
+    const att = p.passive?.index ?? null;
+    if (p.avg != null || att != null) chart.live({ t: p.t, avg: p.avg, online: p.online, att });
+    // attention tile appears only once the crowd is big enough for a passive figure
+    $('#attTile').classList.toggle('hidden', att == null); $('.s-stats').classList.toggle('has-att', att != null);
+    if (att != null) CP.countUp($('#kAtt'), Math.round(att), { dur: 600 });
   }
   socket.on('pulse', onPulse);
   setInterval(() => { if (S && S.event.status !== 'live') paintDots(); }, 2000);

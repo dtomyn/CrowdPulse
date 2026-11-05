@@ -53,6 +53,24 @@
   .toolbar { display: flex; gap: 8px; flex-wrap: wrap; }
   .zone-strip { display: flex; height: 38px; border-radius: 12px; overflow: hidden; margin-top: 8px; }
   .zone-strip div { display: grid; place-items: center; font-size: .8rem; font-weight: 700; color: #07051a; transition: flex 1.2s cubic-bezier(.2,.9,.2,1); flex: 0; min-width: 0; overflow: hidden; }
+  /* passive signals */
+  .ps-sources { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .ps-sources .pill.off { opacity: .45; text-decoration: line-through; }
+  .ps-side { display: grid; gap: 14px; align-content: start; }
+  .ps-stat { padding: 14px; border-radius: 14px; background: rgba(0,0,0,.2); border: 1px solid var(--stroke); }
+  .ps-stat .big { font-family: var(--display); font-size: 1.9rem; font-weight: 700; line-height: 1.1; }
+  .ps-stat .funnel .fr { grid-template-columns: 82px 1fr 34px; font-size: .8rem; }
+  .ps-stat .funnel .bar { height: 14px; }
+  .ps-sub { display: flex; align-items: baseline; gap: 10px; margin: 22px 0 12px; flex-wrap: wrap; }
+  .ps-sub h3 { font-size: 1rem; }
+  .moment.polite { border-color: rgba(255,181,71,.45); } .moment.critical { border-color: rgba(62,197,255,.45); }
+  .moment.laugh { border-color: rgba(255,92,168,.4); } .moment.applause { border-color: rgba(255,181,71,.4); }
+  .moment .vs { display: flex; gap: 22px; margin: 4px 0 6px; }
+  .moment .vs .k { font-size: .72rem; color: var(--muted); text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+  .privacy { display: flex; gap: 10px; align-items: flex-start; margin-top: 18px; padding: 12px 14px; border-radius: 14px; border: 1px dashed var(--stroke-2); font-size: .82rem; color: var(--muted); }
+  @media (max-width: 640px) {
+    .topbar { flex-wrap: wrap; row-gap: 8px; } .toolbar { width: 100%; justify-content: flex-end; }
+  }
   @media (max-width: 960px) { .g2, .g3, .g-2-1 { grid-template-columns: 1fr; } .hero { grid-template-columns: 1fr; justify-items: center; text-align: center; } }
   @media print {
     body { background: #0b0820 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }

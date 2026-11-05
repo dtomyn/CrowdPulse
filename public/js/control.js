@@ -73,26 +73,108 @@
     S.pulse = p;
     gauge.set(p.avg, p.avg == null ? 'Waiting for ratings' : CP.mood(p.avg).label);
     dist.set(p.dist);
-    if (p.avg != null) chart.live({ t: p.t, avg: p.avg, online: p.online });
+    if (p.avg != null || p.passive?.index != null) chart.live({ t: p.t, avg: p.avg, online: p.online, att: p.passive?.index ?? null });
     $('#kOnline').textContent = p.online; $('#kRaters').textContent = p.n;
     $('#kRatePct').textContent = p.online ? Math.round((p.n / p.online) * 100) + '% of room' : '–';
     $('#kEnergy').textContent = p.energy; $('#kRpm').textContent = p.rpm + ' reactions/min';
     $('#kTrend').textContent = p.momentum > 0.5 ? '↗ ' + p.momentum : p.momentum < -0.5 ? '↘ ' + Math.abs(p.momentum) : '→';
     $('#kTrend').style.color = p.momentum > 2 ? 'var(--good)' : p.momentum < -2 ? 'var(--bad)' : '';
     $('#pulseSub').textContent = `${p.n} active rating${p.n === 1 ? '' : 's'}`;
+    paintPassive();
     coach(p);
+  }
+
+  // ---------- passive signals ----------
+  // Crowd-level numbers only. Any figure the server returns as null is below the 5-person privacy threshold.
+  const WAIT = 'Shown once 5+ people contribute';
+  const pct = v => (v == null ? '—' : Math.round(v) + '%');
+  const meterRow = (id, label, mc, mg) => `<div class="mrow"><div class="l"><span>${label}</span><b id="${id}V">—</b></div><div class="meter"><i id="${id}" style="${mc ? `--mc:${mc};` : ''}${mg ? `--mg:${mg}` : ''}"></i></div></div>`;
+  const WARM = ['linear-gradient(90deg,#ffb547,#ff5c7a)', 'rgba(255,92,122,.6)'];
+  const GOOD = ['linear-gradient(90deg,#19c98b,#2ee6d6)', 'rgba(46,230,166,.6)'];
+  const PINK = ['linear-gradient(90deg,#7c5cff,#ff5ca8)', 'rgba(255,92,168,.6)'];
+  function buildPassive() {
+    $('#psTab').innerHTML = `<h4>🗂️ Tab focus <span class="tag" id="psTabTag">ON</span></h4>
+      <div id="psTabBody">${meterRow('psFocus', 'Session tab in view')}${meterRow('psAway', 'Mostly away', ...WARM)}</div>
+      <div class="ps-wait hidden" id="psTabWait"></div><div class="foot" id="psTabFoot"></div>`;
+    $('#psCam').innerHTML = `<h4>📷 Attendee cameras <span class="tag" id="psCamTag">OFF</span></h4>
+      <div id="psCamBody">${meterRow('psCamAtt', 'Attention')}${meterRow('psCamPos', 'Positive', ...GOOD)}${meterRow('psCamFat', 'Fatigue', ...WARM)}</div>
+      <div class="ps-wait hidden" id="psCamWait"></div><div class="foot" id="psCamFoot"></div>`;
+    $('#psRoom').innerHTML = `<h4>🎙️ Room sensor <span class="tag" id="psRoomTag">OFF</span></h4>
+      <div id="psRoomBody">${meterRow('psLook', 'Faces looking forward')}${meterRow('psLaugh', 'Laughter <span class="dim">(est.)</span>', ...PINK)}${meterRow('psClap', 'Applause <span class="dim">(est.)</span>', ...GOOD)}</div>
+      <div class="ps-wait hidden" id="psRoomWait"></div><div class="foot" id="psRoomFoot"></div>`;
+  }
+  const setMeter = (id, v, text) => { const el = $('#' + id); if (!el) return; el.style.width = (v == null ? 0 : Math.max(0, Math.min(100, v))) + '%'; $('#' + id + 'V').textContent = text ?? pct(v); };
+  // show the meters, or a placeholder message instead of numbers
+  const section = (name, on, ready, waitHtml) => {
+    $(`#ps${name}`).classList.toggle('off', !on);
+    $(`#ps${name}Tag`).textContent = on ? 'ON' : 'OFF'; $(`#ps${name}Tag`).classList.toggle('on', on);
+    $(`#ps${name}Body`).classList.toggle('hidden', !(on && ready));
+    const w = $(`#ps${name}Wait`); w.classList.toggle('hidden', on && ready);
+    if (!(on && ready)) w.innerHTML = waitHtml;
+  };
+  const waitMsg = (icon, msg) => `<span class="big">${icon}</span>${msg}`;
+  function paintPassive() {
+    if (!$('#psTab').firstChild) buildPassive();
+    const st = S.event.settings || {}, p = S.pulse, P = p?.passive || null, live = S.event.status === 'live';
+    const tabOn = st.passiveTab !== false, camOn = !!st.passiveCamera, roomOn = !!st.passiveRoom;
+    const pending = live ? WAIT : 'Starts when the session goes live';
+    // combined index
+    const idx = P?.index ?? null;
+    const big = $('#psIndex');
+    big.classList.toggle('wait', idx == null);
+    big.innerHTML = idx == null ? (tabOn || camOn || roomOn ? pending : 'All passive signals are off') : `${Math.round(idx)}<small>/100</small>`;
+    big.style.color = idx == null ? '' : CP.moodColor(idx);
+    $('#psIndexBar').style.width = (idx ?? 0) + '%';
+    const srcs = [P?.focus != null && 'tab focus', P?.attention != null && 'cameras', P?.room?.attention != null && 'room'].filter(Boolean);
+    $('#psIndexNote').textContent = srcs.length ? 'From ' + srcs.join(' + ') : 'Combines tab focus, attendee cameras and the room sensor';
+    $('#psSub').textContent = P ? `${P.nTab} tab${P.nTab === 1 ? '' : 's'} · ${P.nCam} cam${P.nCam === 1 ? '' : 's'} · numbers only` : 'numbers only · 5+ people';
+    // said vs. shown
+    const avg = p?.avg ?? null;
+    $('#svR').style.width = (avg ?? 0) + '%'; $('#svRv').textContent = avg == null ? '—' : Math.round(avg);
+    $('#svA').style.width = (idx ?? 0) + '%'; $('#svAv').textContent = idx == null ? '—' : Math.round(idx);
+    const sv = $('#svText'); let cls = '', txt;
+    if (avg == null || idx == null) txt = avg == null && idx == null ? 'Compares what people rate with what the room shows.' : avg == null ? 'Waiting for ratings to compare with.' : 'Waiting for passive signals to compare with.';
+    else {
+      const gap = Math.round(avg - idx), head = `Ratings <b>${Math.round(avg)}</b> · Attention <b>${Math.round(idx)}</b>`;
+      if (gap >= 20) { cls = 'warn'; txt = `${head} — polite but distracted?`; }
+      else if (gap <= -20) { cls = 'info'; txt = `${head} — watching closely but rating low. A tough crowd, or a hard topic?`; }
+      else { cls = 'good'; txt = `${head} — what they say matches what they show.`; }
+    }
+    sv.className = 'sv-verdict ' + cls; sv.innerHTML = txt;
+    // tab focus
+    section('Tab', tabOn, P?.focus != null, tabOn ? waitMsg('🗂️', pending) : waitMsg('💤', 'Off · switch on in Live settings'));
+    setMeter('psFocus', P?.focus); setMeter('psAway', P?.away, P?.away == null ? '—' : P.away + '% of people');
+    $('#psTabFoot').textContent = tabOn && P ? `${P.nTab} reporting` : '';
+    // attendee cameras
+    const optIns = summary?.stats?.cameraOptIns ?? 0, joined = summary?.stats?.participants ?? 0;
+    section('Cam', camOn, P?.attention != null, camOn ? waitMsg('📷', live ? `${WAIT}<br>Attendees opt in from their phone` : pending) : waitMsg('💤', 'Off · attendees can opt in once you switch it on'));
+    setMeter('psCamAtt', P?.attention); setMeter('psCamPos', P?.positive); setMeter('psCamFat', P?.fatigue);
+    $('#psCamFoot').textContent = camOn ? `${optIns} of ${joined} opted in${P ? ` · ${P.nCam} reporting` : ''}` : '';
+    // room sensor
+    const R = P?.room || null;
+    section('Room', roomOn, !!R, roomOn ? waitMsg('🎙️', live ? 'Waiting for the room sensor on this laptop' : pending) : waitMsg('💤', 'Off · switch on to use this laptop as a room sensor'));
+    if (R) {
+      setMeter('psLook', R.attention, R.attention == null ? (R.faces ? `${R.faces} face${R.faces === 1 ? '' : 's'} · 5+ needed` : 'no faces') : `${R.looking} of ${R.faces}`);
+      setMeter('psLaugh', R.laughter); setMeter('psClap', R.applause);
+    }
+    $('#psRoomFoot').textContent = R ? `Sound level ${R.level ?? '—'} · estimates from loudness patterns` : '';
   }
   // Presenter coach: contextual nudges based on the room's trajectory
   function coach(p) {
     // each kind of nudge has its own 45s cooldown, so a mood dip is never hidden by an earlier "energy is high" note
     const now = Date.now();
-    if (now - lastAlert < 8000 || p.avg == null || p.n < 3) return;
+    if (now - lastAlert < 8000) return;
+    const rated = p.avg != null && p.n >= 3, P = p.passive || {};
     const candidates = [
-      [p.momentum <= -6, 'drop', 'warn', '📉', `Mood dropped ${Math.abs(p.momentum)} pts in the last 30s. Try a quick poll, a story or a question to re-engage.`],
-      [p.avg < 45, 'cool', 'warn', '🧊', 'The room is running cool. A change of pace or an interactive moment could help.'],
-      [p.momentum >= 6, 'jump', 'good', '🚀', `Mood jumped ${p.momentum} pts — whatever you just did, it landed!`],
-      [p.energy >= 70, 'energy', 'good', '🔥', 'Energy is through the roof. Great moment to drop a key message.'],
-      [p.online > 4 && p.n / p.online < 0.4, 'raters', 'warn', '🙋', 'Less than half the room is rating. Remind people to scan the QR code.'],
+      [rated && p.momentum <= -6, 'drop', 'warn', '📉', `Mood dropped ${Math.abs(p.momentum)} pts in the last 30s. Try a quick poll, a story or a question to re-engage.`],
+      [rated && p.avg < 45, 'cool', 'warn', '🧊', 'The room is running cool. A change of pace or an interactive moment could help.'],
+      [rated && P.index != null && P.index < 45 && p.avg >= 65, 'distracted', 'warn', '🫣', `Ratings say ${Math.round(p.avg)} but attention is only ${Math.round(P.index)} — polite but distracted? Ask the room something.`],
+      [P.away != null && P.away >= 40, 'tabaway', 'warn', '🗂️', `${P.away}% of the room has mostly switched to other tabs. A quick poll or a hands-up question can pull them back.`],
+      [P.fatigue != null && P.fatigue >= 60, 'fatigue', 'warn', '🥱', 'Camera signals suggest the room is getting tired. Good time for a stretch, a break or a change of pace.'],
+      [rated && p.momentum >= 6, 'jump', 'good', '🚀', `Mood jumped ${p.momentum} pts — whatever you just did, it landed!`],
+      [P.room?.laughter != null && P.room.laughter >= 60, 'laughter', 'good', '😂', 'The room is laughing — that landed. Ride the moment into your next point.'],
+      [rated && p.energy >= 70, 'energy', 'good', '🔥', 'Energy is through the roof. Great moment to drop a key message.'],
+      [rated && p.online > 4 && p.n / p.online < 0.4, 'raters', 'warn', '🙋', 'Less than half the room is rating. Remind people to scan the QR code.'],
     ];
     const pick = candidates.find(([hit, kind]) => hit && now - (alertAt[kind] || 0) >= 45000);
     if (!pick) return;
@@ -173,14 +255,29 @@
 
   // ---------- settings ----------
   const SETTINGS = [['chat', '💬 Live chat'], ['qa', '🙋 Q&A'], ['reactions', '🎆 Reactions'], ['showCrowdMood', '📊 Show crowd mood to attendees'], ['publicReport', '🏆 Share report with attendees']];
+  const PASSIVE_SETTINGS = [
+    ['passiveTab', '🗂️ Tab focus', 'Each attendee page reports how much of the time the session tab was in view. On by default.'],
+    ['passiveCamera', '📷 Attendee cameras (opt-in)', 'Attendees may opt in to on-device face analysis. Only attention, positive and fatigue numbers leave their phone.'],
+    ['passiveRoom', '🎙️ Room sensor on this laptop', 'Counts faces looking forward and listens for laughter and applause. No video or audio leaves this laptop.'],
+  ];
+  const settingOn = (st, k) => (k === 'passiveTab' ? st[k] !== false : !!st[k]);
   function paintSettings() {
     const host = $('#settings'); host.innerHTML = '';
-    SETTINGS.forEach(([k, l]) => {
-      const el = h(`<label class="switch"><input type="checkbox" ${S.event.settings[k] ? 'checked' : ''}><span class="track"></span>${l}</label>`);
+    const sw = (k, l) => {
+      const el = h(`<label class="switch"><input type="checkbox" ${settingOn(S.event.settings, k) ? 'checked' : ''}><span class="track"></span>${l}</label>`);
       el.querySelector('input').onchange = e => emit('admin:settings', { [k]: e.target.checked });
       host.appendChild(el);
-    });
+    };
+    SETTINGS.forEach(([k, l]) => sw(k, l));
+    host.appendChild(h(`<div class="set-sub">👁️ Passive signals · crowd figures from 5+ people</div>`));
+    PASSIVE_SETTINGS.forEach(([k, l, help]) => { sw(k, l); host.appendChild(h(`<div class="set-help">${help}</div>`)); });
+    paintPassive();
+    room.sync(S.event);
   }
+
+  // ---------- room sensor (this laptop) ----------
+  const room = CP.roomSensor($('#roomCard'), { send: r => socket.emit('admin:room', r) });
+  window.addEventListener('pagehide', () => room.stop());
 
   // ---------- simulator ----------
   $('#simCount').oninput = e => ($('#simN').textContent = e.target.value);

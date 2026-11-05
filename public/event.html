@@ -7,6 +7,7 @@
 <meta name="theme-color" content="#07051a">
 <link rel="stylesheet" href="/css/style.css">
 <link rel="stylesheet" href="/css/raters.css">
+<link rel="stylesheet" href="/css/passive.css">
 <style>
   body { padding-bottom: env(safe-area-inset-bottom); }
   .ev-head { display: flex; gap: 14px; align-items: center; min-width: 0; }
@@ -101,7 +102,7 @@
 <body data-tab="rate">
 <header class="topbar">
   <div class="ev-head"><span id="brandMark"></span><div class="t"><h1 id="evTitle">Loading…</h1><div class="sub" id="evSub"></div></div></div>
-  <span class="spacer"></span><span id="statusPill"></span>
+  <span class="spacer"></span><span id="pvChip"></span><span id="statusPill"></span>
   <button class="me-btn" id="meBtn"><span class="av" id="meAv">🙂</span><span class="nm" id="meName"></span></button>
 </header>
 
@@ -140,6 +141,7 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/common.js"></script>
+<script src="/js/passive.js"></script>
 <script src="/js/raters.js"></script>
 <script src="/js/event.js"></script>
 </body>

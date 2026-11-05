@@ -67,6 +67,26 @@ Data is stored in `data/db.json`.
 - Top contributors leaderboard, questions, poll results
 - Export to PDF (print), CSV and JSON
 
+## Passive signals
+
+Besides what people rate, CrowdPulse can show what the room shows without anyone pressing a button. The host turns each source on per session (in the new-session form or the control room's Live settings):
+
+| Source | Default | Where it runs | What leaves the device |
+|---|---|---|---|
+| 👀 Tab focus | On | Each attendee's page | How much of the last few seconds the session tab was in view, and an interaction count |
+| 📷 Attendee cameras | Off, and each attendee opts in | Each attendee's own device (MediaPipe face analysis in the browser) | Three numbers: attention, positive expression, fatigue |
+| 🎙️ Room sensor | Off | The presenter's laptop camera and microphone | Faces counted and how many look forward, plus laughter, applause and loudness estimates |
+
+How it's kept safe:
+
+- **No raw data:** no images, video or audio are sent or stored, only the numbers above (`lib/passive.js` drops anything else).
+- **Crowd figures only:** they appear only once at least **5 people** contribute, so no one can be singled out, and they're exported as crowd figures only.
+- **Kept apart from ratings:** passive data is never blended into the rating score. It's shown as its own **Attention** line, so you can see where what people said and what the room showed disagree. The coach flags "polite but distracted" moments.
+- **Camera use is visible:** the camera only starts after a click, shows a "camera on" indicator with a Stop button, and previews exactly what is sent.
+- **Know the rules where you present:** cameras need HTTPS or localhost (phones on plain `http://` over Wi-Fi can't use them). Emotion recognition is restricted in workplaces and education under the EU AI Act, and face data is biometric data under GDPR and laws like Illinois's BIPA. Use these sources only where that's appropriate, and tell the room.
+
+Expression and attention estimates are approximate. Treat them as a hint alongside the ratings, not a verdict. The demo audience simulator produces passive data too, so you can preview everything without real people.
+
 ## Explainer video
 
 A narrated walkthrough of the app, filmed from the real pages one exact frame at a time, lives in `film/`:
@@ -86,7 +106,9 @@ C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render.py --storyboard
 C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render.py
 ```
 
-`--storyboard` writes `film/out/storyboard.html`, `script.md` and captions in a few minutes. The default run writes the 2560×1440 master `film/out/crowdpulse-explainer.mp4`, a 1080p copy, the storyboard built from master frames, captions (`.srt`) and a thumbnail. `--preview` makes a quick 960×540 version. The report scene shows the real report of the session given by `--code` (default `E33JW2`), and reads a copy of `data/db.json`. To replace a synthetic line with a real recording, save `film/vo/recorded/<id>.wav` (ids are in `script.md`), and the picture retimes to fit.
+The report scene shows a reproducible 30-minute session built by `node film/fixture.js` (saved as `film/fixture/db.json`). It runs every second through the app's own passive-signal code, so the report includes passive signals, "engaged but critical" and "polite but distracted" stretches, and laughter peaks. Use `--data` and `--code` to film another session instead.
+
+`--storyboard` writes `film/out/storyboard.html`, `script.md` and captions in a few minutes. The default run writes the 2560×1440 video `film/out/crowdpulse-explainer.mp4` (add `--share` for a 1080p copy), the storyboard built from master frames, captions (`.srt`) and a thumbnail. `--preview` makes a quick 960×540 version. The film's server reads a copy of the data, so your own sessions in `data/` are never touched. To replace a synthetic line with a real recording, save `film/vo/recorded/<id>.wav` (ids are in `script.md`), and the picture retimes to fit.
 
 ## Stack
 

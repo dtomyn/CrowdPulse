@@ -69,6 +69,14 @@
           <label class="switch"><input type="checkbox" name="publicReport"><span class="track"></span>🏆 Share final report with attendees</label>
         </div>
       </div>
+      <div class="field">Passive signals <span class="dim">— what the room shows without pressing a button</span>
+        <div class="grid" style="gap:10px;margin-top:4px">
+          <label class="switch"><input type="checkbox" name="passiveTab" checked><span class="track"></span>👀 Tab focus — is the session tab in view?</label>
+          <label class="switch"><input type="checkbox" name="passiveCamera"><span class="track"></span>📷 Attendee cameras — opt-in, analysed on their own device</label>
+          <label class="switch"><input type="checkbox" name="passiveRoom"><span class="track"></span>🎙️ Room camera &amp; microphone — on your laptop, for in-person rooms</label>
+        </div>
+        <div class="dim" style="font-size:.78rem;margin-top:8px">No images or audio leave any device — only a few numbers, shown once at least 5 people contribute. Check local rules before using cameras: emotion recognition is restricted in workplaces and education in the EU.</div>
+      </div>
       <button class="btn primary" style="margin-top:6px">Create session &amp; QR code →</button>
     </form>
 
@@ -122,7 +130,7 @@
       title: f.get('title'), description: f.get('description'), presenter: f.get('presenter'),
       startsAt: new Date(f.get('startsAt')).toISOString(), durationMin: Number(f.get('durationMin')), accent,
       location: { mode: locMode, venue: f.get('venue'), address: f.get('address'), url: f.get('url') },
-      settings: Object.fromEntries(['chat', 'qa', 'reactions', 'showCrowdMood', 'publicReport'].map(k => [k, f.get(k) === 'on'])),
+      settings: Object.fromEntries(['chat', 'qa', 'reactions', 'showCrowdMood', 'publicReport', 'passiveTab', 'passiveCamera', 'passiveRoom'].map(k => [k, f.get(k) === 'on'])),
     };
     try {
       const ev = await api('/api/events', { method: 'POST', body: JSON.stringify(body) });

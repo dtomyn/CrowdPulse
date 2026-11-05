@@ -24,7 +24,7 @@ def main():
     proc, port = render.start_server()
     try:
         with sync_playwright() as pw:
-            browser, page, errors = render.open_director(pw, port, args.scale, "E33JW2", render.DEFAULT_KOKORO)
+            browser, page, errors = render.open_director(pw, port, args.scale, "DSN26F", render.DEFAULT_KOKORO)
             wanted = sorted(args.times)
             started = time.time()
             while wanted:

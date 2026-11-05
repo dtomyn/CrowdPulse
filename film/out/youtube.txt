@@ -8,7 +8,7 @@ How to Get Live Audience Feedback While You Present (Full Walkthrough)
 DESCRIPTION
 What if you could see how your talk is landing while you give it?
 
-CrowdPulse lets your audience rate your session live from their phones. You see the room's mood second by second, and when the lights come up you get a full report. This 3-minute walkthrough goes from creating a session to that final report.
+CrowdPulse lets your audience rate your session live from their phones. You see the room's mood second by second, and when the lights come up you get a full report. This 4-minute walkthrough goes from creating a session to that final report.
 
 What you'll see:
 • Create a session with a title, time and location: in person, virtual or hybrid
@@ -18,8 +18,9 @@ What you'll see:
 • Live chat, Q&A with upvotes, instant polls, and spotlighting a question on every screen
 • A control room with a live mood gauge, rating spread, energy, trend and chapter markers
 • A built-in coach that nudges you when the mood dips or spikes
+• Passive signals: tab focus, opt-in attendee cameras analysed on their own device, and a room sensor, compared with ratings as "said vs. shown"
 • End-of-session feedback: stars, Net Promoter Score and one-word reviews
-• A post-session report: grade, mood timeline, key moments, engagement funnel, word cloud, sentiment, NPS, plus PDF, CSV and JSON export
+• A post-session report: grade, mood timeline, key moments, rating vs. attention, engagement funnel, word cloud, sentiment, NPS, plus PDF, CSV and JSON export
 
 Chapters
 0:00 Intro
@@ -31,14 +32,15 @@ Chapters
 1:33 Reaction storms
 1:39 Chat, Q&A and polls
 1:56 Read the room: the control room and coach
-2:16 On the big screen
-2:24 Wrap up and feedback
-2:33 The report
-3:03 Get started
+2:16 Passive signals: attention, said vs. shown
+2:54 On the big screen
+3:02 Wrap up and feedback
+3:11 The report
+3:53 Get started
 
 Get started: run npm start, then open localhost:3000/admin. Attendees on the same Wi-Fi join by scanning the QR code.
 
-Everything in this video is the real application, recorded frame by frame. The audience in the demo is simulated, and the narration uses a synthetic voice (Kokoro text-to-speech).
+Everything in this video is the real application, recorded frame by frame. The audience in the demo is simulated, and the narration uses a synthetic voice (Kokoro text-to-speech). Camera-based signals are opt-in, run on the attendee's own device, and send only crowd-level numbers.
 
 TAGS
-audience feedback, live polling, audience engagement, presentation tips, real-time feedback, QR code, live Q&A, event app, workshop tools, public speaking, net promoter score, sentiment analysis, hybrid events, virtual events, Node.js, Socket.IO
+audience feedback, audience attention, engagement analytics, live polling, audience engagement, presentation tips, real-time feedback, QR code, live Q&A, event app, workshop tools, public speaking, net promoter score, sentiment analysis, hybrid events, virtual events, Node.js, Socket.IO

@@ -458,10 +458,50 @@
       ],
     },
     {
+      id: 'passive', title: 'Passive signals', feature: 'Tab focus, the opt-in attendee camera and its consent sheet, the control room Passive signals card, said vs. shown, and the distracted coach nudge', camera: 'Phone close-up on the consent sheet, then the control room card, the said-vs-shown meters, the coach alert and the dashed attention line', sound: 'Clicks',
+      beats: [
+        { id: 'passive-1', say: 'CrowdPulse can also read the room passively. When the host allows it, attendees can choose to share their attention.', do: [
+          [0, () => { showCursor(false); reset(1); layout('phone', 1000); chapter(9, 'New', 'Passive signals'); S.react = 0.5; S.chatty = 0.8;
+            side('Without a button', 'Read the room <span class="gradient-text">passively</span>', [['👀', 'Tab focus'], ['📷', 'Opt-in attendee camera'], ['🎙️', 'Room sensor on your laptop'], ['🔒', 'Numbers only · 5+ people']]); later(600, () => sideOn(1)); }],
+          [500, () => click('phone', '#mobnav [data-tab="rate"]', { move: 600 })],
+          [1500, () => { scrollDev('phone', '#pvCard', 700); }],
+          [2300, () => focus('phone', '#pvCard', { fill: 0.9, max: 1.8, dur: 1100 })],
+          [3300, () => click('phone', '#pvCard [data-act="info"]', { move: 500 })],
+          [4300, () => board('Share attention, optional', 'The opt-in offer on the attendee phone')],
+        ] },
+        { id: 'passive-2', say: 'Their camera is analysed on their own phone. No video ever leaves it: just three numbers, for attention, positive, and fatigue.', do: [
+          [0, () => { showCursor(false); reset(700); }],
+          [800, () => focus('phone', '.pv-sheet', { fill: 0.92, max: 1.35, dur: 1200 })],
+          [2400, () => { const box = doc('phone').querySelector('.pv-sheet'); box && tween('sheet-scroll', 0, 260, 1800, v => (box.scrollTop = v), 'io'); }],
+          [3200, () => board('The consent sheet', 'On-device analysis, three numbers only, crowd figures from 5+ people, stop anytime')],
+          [5800, () => { el('phone', '.pv-sheet [data-act="no"]')?.click(); reset(900); }],
+        ] },
+        { id: 'passive-3', say: 'In the control room, the passive signals card blends tab focus, cameras and a room sensor into one attention index, shown only once five or more people take part.', do: [
+          [0, () => { sideOn(-1); layout('desk', 1000); S.distract = 1.25; }],
+          [300, () => scrollDev('desk', '#passiveCard', 800)],
+          [1200, () => focus('desk', '#passiveCard', { fill: 0.92, max: 1.6, dur: 1300 })],
+          [3200, () => focus('desk', '.ps-grid', { fill: 0.85, max: 2.0, dur: 1200 })],
+          [4400, () => board('Passive signals card', 'Attention index, tab focus, attendee cameras and the room sensor')],
+          [6200, () => focus('desk', '.ps-top', { fill: 0.85, max: 2.0, dur: 1100 })],
+        ] },
+        { id: 'passive-4', say: 'It also compares what people say with what they show. When ratings stay high but attention slips, the coach flags it: polite, but distracted.', min: 8200, do: [
+          [0, () => focus('desk', '#svText', { fill: 0.5, max: 2.4, dur: 1000 })],
+          [1200, () => board('Said vs. shown', 'Ratings stay high while attention drops')],
+          [1600, () => when(() => doc('desk').querySelector('#alerts .alert[data-kind="distracted"], #alerts .alert[data-kind="tabaway"]'), () => {
+            win('desk').scrollTo(0, 0); focus('desk', '#alerts .alert[data-kind="distracted"], #alerts .alert[data-kind="tabaway"]', { fill: 0.6, max: 2.2, dur: 1000 });
+            later(1600, () => board('Polite but distracted', 'The coach notices the gap between ratings and attention'));
+          }, 6000)],
+          [5200, () => { scrollDev('desk', '#chart', 700); }],
+          [6000, () => focus('desk', '#chart', { fill: 0.85, max: 1.9, dur: 1100 })],
+          [7600, () => { S.distract = 0; reset(900); }],
+        ] },
+      ],
+    },
+    {
       id: 'stage', title: 'On the big screen', feature: 'Stage view during the session: gauge, stats, chat ticker, chart and reactions', camera: 'Slow push-in on the gauge, then wide', sound: 'Confetti burst',
       beats: [
         { id: 'stage-1', say: 'The stage view puts it all up on the projector: the live gauge, the chat, the polls, and every single reaction.', min: 6200, do: [
-          [0, () => { go('full', `/stage/${CODE()}`, '#gauge .num'); layout('full', 1000); chapter(9, 'For the room', 'On the big screen'); S.react = 2.6; }],
+          [0, () => { go('full', `/stage/${CODE()}`, '#gauge .num'); layout('full', 1000); chapter(10, 'For the room', 'On the big screen'); S.react = 2.6; }],
           [400, () => focus('full', '#gauge', { fill: 0.75, max: 1.5, dur: 1 })],
           [500, () => reset(4200)],
           [3600, () => { S.admin('admin:confetti'); sfx('pop'); }],
@@ -473,7 +513,7 @@
       id: 'end', title: 'Wrap up', feature: 'End the session; the attendee feedback form: stars, NPS, detail ratings and one word', camera: 'Side by side, then close on the phone form', sound: 'Clicks, key taps, confetti',
       beats: [
         { id: 'end-1', say: 'When you finish, end the session. Every phone asks for a quick review: stars, how likely they are to recommend it, and one word that sums it up.', do: [
-          [0, () => { layout('duo', 1000); chapter(10, 'Wrap up', 'Feedback'); S.react = 0.6; }],
+          [0, () => { layout('duo', 1000); chapter(11, 'Wrap up', 'Feedback'); S.react = 0.6; }],
           [600, () => focus('desk', '#mainBtns', { fill: 0.4, max: 2.2 })],
           [1500, () => click('desk', '#mainBtns .danger')],
           [2300, () => click('phone', '#mobnav [data-tab="rate"]', { move: 600 })],
@@ -492,7 +532,7 @@
       id: 'report', title: 'The report', feature: 'Post-session report: grade, KPIs, timeline, insights, key moments, engagement, word cloud, NPS and exports', camera: 'Zooms on the grade, then scrolls with push-ins on each section', sound: 'Chime on the grade',
       beats: [
         { id: 'report-1', say: 'Then comes the report. A grade, a score, and the numbers that matter.', min: 5200, do: [
-          [0, () => { go('full', `/report/${CODE()}?key=${real.adminKey}`, '#kpis .kpi'); layout('full', 900); chapter(11, 'Afterwards', 'The report'); }],
+          [0, () => { go('full', `/report/${CODE()}?key=${real.adminKey}`, '#kpis .kpi'); layout('full', 900); chapter(12, 'Afterwards', 'The report'); }],
           [200, () => { focus('full', '#grade', { fill: 0.5, max: 2.4, dur: 1 }); sfx('chime'); }],
           [2600, () => board('Grade reveal', 'The animated letter grade and score')],
           [2900, () => focus('full', '#kpis', { fill: 0.95, max: 1.6, dur: 1400 })],
@@ -505,6 +545,16 @@
           [4300, () => { scrollFull('#moments', 1200); reset(1200); }],
           [5600, () => focus('full', '.moment', { fill: 0.6, max: 2.2 })],
           [7000, () => board('Key moments', 'The biggest peak, with the reactions and chat around it')],
+        ] },
+        { id: 'report-passive', say: 'A passive signals section lines attention up against the ratings, and finds where they disagreed: engaged but critical in the deep dive, and polite but distracted during the results.', min: 9800, do: [
+          [0, () => { reset(800); scrollFull('#passive', 1400); }],
+          [1500, () => focus('full', '#psKpis', { fill: 0.9, max: 1.6, dur: 1100 })],
+          [2900, () => { reset(700); scrollFull('#cPassive', 1000); }],
+          [4000, () => focus('full', '#cPassive', { fill: 0.92, max: 1.7, dur: 1200 })],
+          [5200, () => board('Rating vs. attention', 'Mood line, dashed attention line, tab focus, laughter and applause')],
+          [6200, () => { reset(700); scrollFull('#psGaps', 1000); }],
+          [7300, () => focus('full', '#psGaps', { fill: 0.95, max: 1.6, dur: 1200 })],
+          [8700, () => board('Said vs. shown in the report', 'Engaged but critical, and polite but distracted, with the chapters they fell in')],
         ] },
         { id: 'report-3', say: 'Then engagement, reactions, sentiment, a word cloud, and the Net Promoter Score.', min: 9400, do: [
           [0, () => { reset(900); scrollFull('#funnel', 1300); }],
@@ -612,6 +662,7 @@
     clock.now += ms; elapsed += ms;
     frameWins().forEach(w => w.__film.advance(ms));
     runTweens();
+    const st = $('#stage'); if (st.scrollTop || st.scrollLeft) { st.scrollTop = 0; st.scrollLeft = 0; }
     paintCursor(); paintCallouts();
     return elapsed >= total ? 'done' : 'run';
   };

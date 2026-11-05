@@ -5,8 +5,8 @@
 <title>CrowdPulse Explainer Director</title>
 <link rel="stylesheet" href="/css/style.css">
 <style>
-  html, body { margin: 0; width: 1600px; height: 900px; overflow: hidden; background: #05030f; }
-  #stage { position: relative; width: 1600px; height: 900px; overflow: hidden; }
+  html, body { margin: 0; width: 1600px; height: 900px; overflow: clip; background: #05030f; }
+  #stage { position: relative; width: 1600px; height: 900px; overflow: clip; } /* clip: frames can't scroll the set into view */
   #cam { position: absolute; left: 0; top: 0; width: 1600px; height: 900px; transform-origin: 0 0; will-change: transform; }
 
   /* set backdrop */

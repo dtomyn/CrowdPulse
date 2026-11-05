@@ -104,7 +104,9 @@ C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render.py --storyboard
 C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render.py
 ```
 
-`--storyboard` writes `film/out/storyboard.html`, `script.md` and captions in a few minutes. The default run writes the 2560×1440 master `film/out/crowdpulse-explainer.mp4`, a 1080p copy, the storyboard built from master frames, captions (`.srt`) and a thumbnail. `--preview` makes a quick 960×540 version. The report scene shows the real report of the session given by `--code` (default `E33JW2`), and reads a copy of `data/db.json`. To replace a synthetic line with a real recording, save `film/vo/recorded/<id>.wav` (ids are in `script.md`), and the picture retimes to fit.
+The report scene shows a reproducible 30-minute session built by `node film/fixture.js` (saved as `film/fixture/db.json`). It runs every second through the app's own passive-signal code, so the report includes passive signals, "engaged but critical" and "polite but distracted" stretches, and laughter peaks. Use `--data` and `--code` to film another session instead.
+
+`--storyboard` writes `film/out/storyboard.html`, `script.md` and captions in a few minutes. The default run writes the 2560×1440 video `film/out/crowdpulse-explainer.mp4` (add `--share` for a 1080p copy), the storyboard built from master frames, captions (`.srt`) and a thumbnail. `--preview` makes a quick 960×540 version. The film's server reads a copy of the data, so your own sessions in `data/` are never touched. To replace a synthetic line with a real recording, save `film/vo/recorded/<id>.wav` (ids are in `script.md`), and the picture retimes to fit.
 
 ## Stack
 

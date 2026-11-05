@@ -7,8 +7,9 @@ frame is deterministic. The voice is Kokoro af_heart, the same voice and setting
 Requires the IRISIdeas virtualenv (playwright, imageio-ffmpeg, kokoro-onnx, soundfile, numpy) and its Kokoro model files:
   C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render.py --storyboard   storyboard, script and captions (a few minutes)
   C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render.py --preview      quick 960x540 video
-  C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render.py                1440p master + 1080p copy + everything above
-Options: --code E33JW2 picks the session whose report is shown. --kokoro DIR points at the voice model files.
+  C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render.py                1440p master + everything above (--share adds a 1080p copy)
+Options: --code picks the session whose report is shown and --data the folder with its db.json (defaults: the
+fixture built by `node film/fixture.js`). --kokoro DIR points at the voice model files.
 Narration is cached per line in film/vo and only remade when a line changes. A real recording saved as
 film/vo/recorded/<id>.wav (ids in script.md) replaces the synthetic line, and the picture retimes to fit it.
 """
@@ -86,11 +87,14 @@ def free_port():
         return s.getsockname()[1]
 
 
-def start_server():
+FIXTURE = FILM / "fixture"  # built by `node film/fixture.js`; the session the report scene shows
+
+
+def start_server(source=FIXTURE):
     """Runs the app on a spare port against a copy of the data, with the film studio enabled."""
     data = CACHE / "data"
     data.mkdir(parents=True, exist_ok=True)
-    shutil.copy(ROOT / "data" / "db.json", data / "db.json")
+    shutil.copy(pathlib.Path(source) / "db.json", data / "db.json")
     port = free_port()
     env = {**os.environ, "PORT": str(port), "CROWDPULSE_STUDIO": "1", "CROWDPULSE_DATA_DIR": str(data), "PUBLIC_URL": "http://192.168.1.20:3000"}
     env.pop("ADMIN_PIN", None)
@@ -489,17 +493,17 @@ def render_video(playwright, port, args, model_dir):
     write_storyboard(tl, boards, "960×540 preview" if preview else "from the 1440p master, shown at 1280×720")
     write_captions(tl)
     write_script(tl)
-    finish(ffmpeg, silent, tl, preview)
+    finish(ffmpeg, silent, tl, preview, args.share)
     return errors
 
 
-def finish(ffmpeg, silent, tl, preview):
-    """Adds the sound to the silent picture, and makes the 1080p copy of a master."""
+def finish(ffmpeg, silent, tl, preview, share=False):
+    """Adds the sound to the silent picture, and makes a 1080p copy of a master when asked (--share)."""
     suffix = "-preview" if preview else ""
     final = OUT / f"{NAME}{suffix}.mp4"
     mix(ffmpeg, silent, tl, final)
     print("wrote", final, round(final.stat().st_size / 1e6, 1), "MB", flush=True)
-    if not preview:
+    if share and not preview:
         share = OUT / f"{NAME}-1080p.mp4"
         subprocess.run([ffmpeg, "-y", "-loglevel", "error", "-i", str(final), "-vf", "scale=1920:1080:flags=lanczos", "-c:v", "libx264", "-preset", "medium",
                         "-crf", "19", "-pix_fmt", "yuv420p", "-c:a", "copy", "-movflags", "+faststart", str(share)], check=True)
@@ -516,8 +520,10 @@ def main():
     ap.add_argument("--storyboard", action="store_true")
     ap.add_argument("--preview", action="store_true")
     ap.add_argument("--fps", type=int, default=30)
-    ap.add_argument("--code", default="E33JW2")
+    ap.add_argument("--code", default="DSN26F", help="session whose report is shown (the fixture's by default)")
+    ap.add_argument("--data", default=str(FIXTURE), help="folder holding the db.json to film against")
     ap.add_argument("--kokoro", default=str(DEFAULT_KOKORO))
+    ap.add_argument("--share", action="store_true", help="also write a 1080p copy of the master")
     ap.add_argument("--remix", action="store_true", help="rebuild only the sound on the last render's silent picture")
     args = ap.parse_args()
     if args.remix:
@@ -527,14 +533,14 @@ def main():
             saved = OUT / "timeline.json"  # the storyboard pass writes the same timeline
         if not silent.exists() or not saved.exists():
             raise SystemExit("nothing to remix: render the video first")
-        finish(imageio_ffmpeg.get_ffmpeg_exe(), silent, json.loads(saved.read_text(encoding="utf-8")), args.preview)
+        finish(imageio_ffmpeg.get_ffmpeg_exe(), silent, json.loads(saved.read_text(encoding="utf-8")), args.preview, args.share)
         return
     model_dir = pathlib.Path(args.kokoro)
     if not (model_dir / "kokoro-v1.0.onnx").exists():
         raise SystemExit(f"Kokoro model files not found in {model_dir}")
     OUT.mkdir(parents=True, exist_ok=True)
     CACHE.mkdir(parents=True, exist_ok=True)
-    proc, port = start_server()
+    proc, port = start_server(args.data)
     try:
         with sync_playwright() as pw:
             errors = storyboard_pass(pw, port, args, model_dir) if args.storyboard else render_video(pw, port, args, model_dir)

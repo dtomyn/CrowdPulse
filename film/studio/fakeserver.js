@@ -26,6 +26,7 @@
 
   const S = (window.__server = {
     ev: null, sockets: new Set(), bots: [], moodTarget: 62, react: 1, chatty: 1, online: new Map(), pending: [],
+    distract: 0, passiveLatest: {}, room: null,
   });
 
   S.init = base => {
@@ -59,7 +60,8 @@
 
   // ---------- views ----------
   const pub = () => { const e = S.ev; return { code: e.code, title: e.title, description: e.description, presenter: e.presenter, startsAt: e.startsAt, durationMin: e.durationMin, location: e.location, accent: e.accent, status: e.status, startedAt: e.startedAt, endedAt: e.endedAt, createdAt: e.createdAt, settings: e.settings }; };
-  const summary = () => ({ ...pub(), adminKey: S.ev.adminKey, joinUrl: S.ev.joinUrl, stats: { participants: Object.keys(S.ev.participants).filter(k => k !== 'presenter').length, online: S.online.size, ratings: S.ev.ratings.length, messages: S.ev.messages.length, reactions: S.ev.reactions.length, avg: S.ev.lastPulse?.avg ?? null }, simulating: false });
+  const summary = () => ({ ...pub(), adminKey: S.ev.adminKey, joinUrl: S.ev.joinUrl, stats: { participants: Object.keys(S.ev.participants).filter(k => k !== 'presenter').length, online: S.online.size, ratings: S.ev.ratings.length, messages: S.ev.messages.length, reactions: S.ev.reactions.length, avg: S.ev.lastPulse?.avg ?? null,
+    attention: S.ev.lastPulse?.passive?.index ?? null, cameraOptIns: Object.values(S.ev.participants).filter(p => p.passiveCamera).length }, simulating: false });
   const questionsView = () => S.ev.questions.filter(q => !q.hidden).map(q => ({ id: q.id, name: q.name, avatar: q.avatar, text: q.text, t: q.t, votes: q.votes.length, voters: q.votes, answered: q.answered }))
     .sort((a, b) => (a.answered - b.answered) || (b.votes - a.votes) || (a.t - b.t));
   const pollsView = () => S.ev.polls.map(p => ({ id: p.id, question: p.question, options: p.options, open: p.open, total: Object.keys(p.voters).length, t: p.t }));
@@ -171,6 +173,8 @@
     if (n === 'vote-q') A.voteQuestion(pid, p);
     if (n === 'poll-vote') A.pollVote(pid, p.pollId, +p.idx);
     if (n === 'feedback') { A.feedback(pid, p); ackTo(sock, ack, { ok: true }); }
+    if (n === 'passive' && ev.status === 'live') S.passiveLatest[pid] = { t: Date.now(), vis: p.vis, att: p.cam?.att, pos: p.cam?.pos, fat: p.cam?.fat };
+    if (n === 'passive-off' && S.passiveLatest[pid]) delete S.passiveLatest[pid].att;
     if (n === 'typing') [...S.sockets].filter(k => k !== sock).forEach(k => send(k, 'typing', { name: ev.participants[pid]?.name }));
   }
 
@@ -179,7 +183,7 @@
     for (let i = 0; i < count; i++) {
       const n = S.bots.length + S.pending.length;
       const bot = { pid: 'bot' + n, name: NAMES[n % NAMES.length], avatar: AVATARS[n % AVATARS.length], color: COLORS[n % COLORS.length],
-        mode: MODES[n % MODES.length], bias: (rnd() - 0.5) * 26, jitter: 2 + rnd() * 6, chatty: 0.01 + rnd() * 0.03, reacty: 0.008 + rnd() * 0.025, v: null };
+        mode: MODES[n % MODES.length], camera: n % 9 < 4, away: false, nextPassive: 0, bias: (rnd() - 0.5) * 26, jitter: 2 + rnd() * 6, chatty: 0.01 + rnd() * 0.03, reacty: 0.008 + rnd() * 0.025, v: null };
       bot.joinAt = Date.now() + (count > 1 ? (overMs * i) / (count - 1) : 0) * (0.85 + rnd() * 0.3);
       S.pending.push(bot);
     }
@@ -189,6 +193,30 @@
   S.upvote = (qid, n, overMs) => { for (let i = 0; i < n; i++) setTimeout(() => A.voteQuestion(S.bots[(i * 7) % S.bots.length].pid, qid), (overMs * i) / Math.max(1, n - 1)); };
   S.burst = (emojis, n, overMs) => { for (let i = 0; i < n; i++) setTimeout(() => A.react(S.bots[Math.floor(rnd() * S.bots.length)].pid, pick(emojis)), rnd() * overMs); };
   S.question = text => S.ev.questions.find(q => q.text === text);
+
+  // Same rules as lib/passive.js aggregate(): crowd figures only, and nothing below 5 contributors
+  const mean = a => (a.length ? a.reduce((x, y) => x + y, 0) / a.length : null);
+  const r1 = v => (v == null ? null : Math.round(v * 10) / 10);
+  function aggregate(now) {
+    const st = S.ev.settings;
+    const fresh = Object.values(S.passiveLatest).filter(x => now - x.t < 15000);
+    const tab = fresh.filter(x => x.vis != null), cam = fresh.filter(x => x.att != null);
+    const out = { minCrowd: 5, nTab: tab.length, nCam: cam.length, focus: null, away: null, attention: null, positive: null, fatigue: null, room: null, index: null };
+    if (st.passiveTab !== false && tab.length >= 5) { out.focus = r1(mean(tab.map(x => x.vis)) * 100); out.away = Math.round((tab.filter(x => x.vis < 0.5).length / tab.length) * 100); }
+    if (st.passiveCamera && cam.length >= 5) { out.attention = r1(mean(cam.map(x => x.att))); out.positive = r1(mean(cam.map(x => x.pos))); out.fatigue = r1(mean(cam.map(x => x.fat))); }
+    if (st.passiveRoom && S.room) out.room = { ...S.room };
+    const parts = [out.attention, out.room?.attention, out.focus].filter(v => v != null);
+    out.index = parts.length ? r1(mean(parts)) : null;
+    return out;
+  }
+  function roomTick(now) {
+    if (!S.ev.settings.passiveRoom || S.ev.status !== 'live' || !S.bots.length) return;
+    const recent = S.ev.reactions.filter(r => now - r.t < 4000);
+    const laughs = recent.filter(r => r.e === '😂').length, claps = recent.filter(r => r.e === '👏' || r.e === '🎉').length;
+    const avg = mean(S.bots.map(b => b.v ?? 60));
+    const faces = Math.round(S.bots.length * 0.8), attention = clamp(avg * 0.7 + 26 - S.distract * 40 + (rnd() - 0.5) * 6);
+    S.room = { faces, looking: Math.round(faces * attention / 100), attention: Math.round(attention), laughter: Math.round(clamp(laughs * 18 + rnd() * 6)), applause: Math.round(clamp(claps * 12 + rnd() * 5)), level: Math.round(clamp(30 + laughs * 8 + claps * 6)) };
+  }
 
   function tick() {
     const ev = S.ev, now = Date.now();
@@ -211,11 +239,21 @@
       const mood = b.v ?? 60;
       if (live && rnd() < b.reacty * S.react * (mood > 75 ? 1.6 : 1)) A.react(b.pid, mood > 78 ? pick(['🔥', '👏', '🤯', '❤️', '🎉']) : mood > 55 ? pick(['👏', '😂', '🤔', '❤️', '👏']) : pick(['🤔', '😴']));
       if (live && rnd() < b.chatty * S.chatty * 0.35) A.chat(b.pid, pick(mood > 72 ? LINES.high : mood > 50 ? LINES.mid : LINES.low));
+      // passive signals, as lib/passive.js receives them: attention follows mood, minus any scripted distraction
+      if (live && now >= b.nextPassive) {
+        b.nextPassive = now + 4500 + rnd() * 1500;
+        const a = clamp(mood * 0.7 + 28 - S.distract * 42 + (rnd() - 0.5) * 10);
+        if (rnd() < 0.5) b.away = rnd() < Math.max(0.03, (80 - a) / 70);
+        const cam = ev.settings.passiveCamera && b.camera ? { att: clamp(a - (b.away ? 35 : 0)), pos: clamp((mood - 36) * 1.25 + (rnd() - 0.5) * 14), fat: clamp((84 - a) * 0.45 + rnd() * 6) } : null;
+        S.passiveLatest[b.pid] = { t: now, vis: b.away ? 0.1 + rnd() * 0.3 : 0.88 + rnd() * 0.12, att: cam?.att, pos: cam?.pos, fat: cam?.fat };
+        ev.participants[b.pid].passiveCamera = !!cam;
+      }
       const poll = ev.polls.find(p => p.open);
       if (poll && !(b.pid in poll.voters) && rnd() < 0.22) {
         const r = rnd(); A.pollVote(b.pid, poll.id, poll.options.length === 3 ? (r < 0.64 ? 1 : r < 0.86 ? 2 : 0) : Math.floor(r * poll.options.length));
       }
     }
+    if (S.tickNo % 2 === 0) roomTick(now);
     // pulse, as server.js computes it
     if (ev.status === 'scheduled' && S.online.size) emitAll('pulse', { t: now, avg: null, n: 0, online: S.online.size, dist: [0, 0, 0, 0, 0], energy: 0, rpm: 0, mpm: 0, momentum: 0, elapsed: 0 });
     if (!live) return;
@@ -228,9 +266,9 @@
     const energy = Math.min(100, Math.round(((rr + mm * 2) / Math.max(1, onlineN)) * 25));
     const prev = ev.pulseHistory.length ? ev.pulseHistory[Math.max(0, ev.pulseHistory.length - 6)] : null;
     const pulse = { t: now, avg: avg == null ? null : Math.round(avg * 10) / 10, n: vals.length, online: onlineN, dist, energy, rpm: rr, mpm: mm,
-      momentum: avg != null && prev?.avg != null ? Math.round((avg - prev.avg) * 10) / 10 : 0, elapsed: now - ev.startedAt };
+      momentum: avg != null && prev?.avg != null ? Math.round((avg - prev.avg) * 10) / 10 : 0, elapsed: now - ev.startedAt, passive: aggregate(now) };
     ev.lastPulse = pulse; emitAll('pulse', pulse);
     S.tickNo = (S.tickNo || 0) + 1;
-    if (S.tickNo % 2 === 0) { const point = { t: now, avg: pulse.avg, n: pulse.n, online: onlineN, energy }; ev.pulseHistory.push(point); emitAll('history-point', point); emitAdmins('admin-summary', summary()); }
+    if (S.tickNo % 2 === 0) { const pp = pulse.passive; const point = { t: now, avg: pulse.avg, n: pulse.n, online: onlineN, energy, att: pp.index, focus: pp.focus, cam: pp.attention, pos: pp.positive, fat: pp.fatigue, room: pp.room?.attention ?? null, laugh: pp.room?.laughter ?? null, clap: pp.room?.applause ?? null, nCam: pp.nCam }; ev.pulseHistory.push(point); emitAll('history-point', point); emitAdmins('admin-summary', summary()); }
   }
 })();

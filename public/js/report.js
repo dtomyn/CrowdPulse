@@ -50,6 +50,8 @@
 
   const pct = (a, b) => (b ? Math.round((a / b) * 100) : 0);
   const has = R.timeline.some(p => p.avg != null);
+  const P = R.passive || null;
+  const TEAL = '#2ee6d6';
 
   // ---------- skeleton ----------
   $('#root').innerHTML = `
@@ -71,6 +73,20 @@
     <div class="card reveal"><div class="card-title"><h3>📈 Crowd mood timeline</h3><span class="eyebrow">avg rating · audience size</span></div><div class="chart-box tall"><canvas id="cTimeline"></canvas></div></div>
     <div class="card reveal"><div class="card-title"><h3>💡 Key insights</h3></div><div class="insights" id="insights"></div></div>
   </section>
+${P ? `
+  <section class="sec" id="passive">
+    <div class="card reveal"><div class="card-title"><h3>👁️ Passive signals</h3><span class="eyebrow">what the room showed · crowd figures only</span></div>
+      <div class="ps-sources" id="psSources"></div><div class="kpis" id="psKpis"></div></div>
+    <div class="g-2-1 sec">
+      <div class="card reveal"><div class="card-title"><h3>🎯 Rating vs. attention</h3><span class="eyebrow">said · shown · heard</span></div><div class="chart-box tall"><canvas id="cPassive"></canvas></div></div>
+      <div class="card reveal"><div class="card-title"><h3>🔎 How the room behaved</h3></div><div class="ps-side" id="psSide"></div></div>
+    </div>
+    <div class="card sec reveal">
+      <div class="ps-sub" style="margin-top:0"><h3>🎭 Said vs. shown</h3><span class="eyebrow">where ratings and attention pulled apart</span></div><div class="g3" id="psGaps"></div>
+      <div id="psAudioWrap"><div class="ps-sub"><h3>😂 Laughs &amp; applause</h3><span class="eyebrow">room microphone</span></div><div class="g3" id="psAudio"></div></div>
+      <div class="privacy"><span>🔒</span><div>Measured on attendees' own devices. Only crowd figures from ${P.minCrowd}+ people are shown, no images or audio are stored, and these signals never change the rating score.</div></div>
+    </div>
+  </section>` : ''}
 
   <section class="card sec reveal"><div class="card-title"><h3>🌡️ Time spent in each mood zone</h3><span class="eyebrow">high ${nf(K.high)} · low ${nf(K.low)} · volatility ${nf(K.volatility)}</span></div><div class="zone-strip" id="zones"></div>
     <div class="row dim" style="justify-content:space-between;font-size:.75rem;margin-top:6px"><span>😫 Rough</span><span>😕 Meh</span><span>😐 Okay</span><span>🙂 Good</span><span>🤩 Amazing</span></div></section>
@@ -183,6 +199,106 @@
   });
   if (!has) $('#cTimeline').parentElement.innerHTML = `<div class="empty"><span class="big">📈</span>No ratings were recorded while the session was live.</div>`;
 
+  // ---------- passive signals (crowd figures only; hidden when the session has none) ----------
+  if (P) {
+    const S = P.sources, A = P.attention, L = P.laughter, AP = P.applause;
+    $('#psSources').innerHTML = [
+      [S.tab, '🗂️ Tab focus', `${P.contributors.tab} devices`],
+      [S.camera, '📷 Attendee cameras', `${P.camera.optIns} opted in`],
+      [S.room, '🎥 Room camera & mic', 'presenter device'],
+    ].map(([on, l, s]) => `<span class="pill ${on ? '' : 'off'}" title="${on ? 'On' : 'Off'} for this session">${l}${on ? ` · <span class="dim">${esc(s)}</span>` : ''}</span>`).join('');
+
+    const PK = [
+      ['Attention', A?.avg, '', A ? `peak ${A.peak} · low ${A.low}` : `needs ${P.minCrowd}+ people`, TEAL],
+      ['Tab focus', P.focus?.avg, '%', P.awayPct != null ? (P.awayPct ? `40%+ of room away ${P.awayPct}% of the time` : 'room never 40%+ away') : (S.tab ? `needs ${P.minCrowd}+ people` : 'tab signal off'), '#3ec5ff'],
+      ['Camera opt-ins', S.camera ? P.camera.optIns : null, '', S.camera ? (P.camera.share != null ? `${P.camera.share}% of attendees` : '') : 'attendee cameras off', '#c86bff'],
+      ['Laughter peaks', S.room ? L.count : null, '', S.room ? (L.count ? `loudest ${L.peak} · ${AP.count} applause` : `${AP.count} applause`) : 'room mic off', '#ff5ca8'],
+    ];
+    $('#psKpis').innerHTML = PK.map(([k, v, suf, s, c]) => `<div class="kpi" style="--kc:${c}"><div class="k">${k}</div><div class="v" data-to="${v ?? ''}" data-suf="${suf}">—</div><div class="s">${esc(s)}</div></div>`).join('');
+    new IntersectionObserver((es, o) => {
+      if (!es[0].isIntersecting) return; o.disconnect();
+      $$('#psKpis .v').forEach(el => el.dataset.to !== '' && CP.countUp(el, Number(el.dataset.to), { dec: Number(el.dataset.to) % 1 ? 1 : 0, suffix: el.dataset.suf }));
+    }).observe($('#psKpis'));
+
+    // side panel: correlation, expressions, room camera, how time away was spread
+    const side = [];
+    const C = P.correlation;
+    side.push(`<div class="ps-stat"><div class="eyebrow">Ratings ↔ attention</div>${C
+      ? `<div class="big" style="color:${Math.abs(C.r) >= 0.45 ? 'var(--good)' : Math.abs(C.r) >= 0.2 ? 'var(--warn)' : 'var(--muted)'}">r = ${C.r > 0 ? '+' : ''}${C.r}</div><div style="font-size:.88rem">${esc(C.label)}.</div><div class="dim" style="font-size:.75rem;margin-top:4px">${C.points} five-second readings</div>`
+      : '<div class="dim" style="font-size:.88rem;margin-top:6px">Not enough overlapping rating and attention readings.</div>'}</div>`);
+    if (S.camera) side.push(`<div class="ps-stat"><div class="eyebrow">Faces (opted-in cameras)</div>${P.positive != null || P.fatigue != null
+      ? `<div class="row" style="gap:22px;margin-top:4px"><div><div class="big" style="color:var(--good)">${nf(P.positive)}</div><div class="dim" style="font-size:.75rem">🙂 positive</div></div><div><div class="big" style="color:var(--warn)">${nf(P.fatigue)}</div><div class="dim" style="font-size:.75rem">😪 fatigue</div></div>${P.camera.attention != null ? `<div><div class="big" style="color:${TEAL}">${P.camera.attention}</div><div class="dim" style="font-size:.75rem">👀 attention</div></div>` : ''}</div>`
+      : `<div class="dim" style="font-size:.88rem;margin-top:6px">Fewer than ${P.minCrowd} people shared their camera at once, so no figures are shown.</div>`}</div>`);
+    if (S.room && P.roomAttention != null) side.push(`<div class="ps-stat"><div class="eyebrow">Room camera</div><div class="big" style="color:${TEAL}">${P.roomAttention}</div><div class="dim" style="font-size:.75rem">avg share of faces looking forward</div></div>`);
+    if (P.awayDistribution) {
+      const tot = P.awayDistribution.reduce((a, b) => a + b.people, 0);
+      side.push(`<div class="ps-stat"><div class="eyebrow" style="margin-bottom:8px">Time with the tab out of view</div><div class="funnel" id="psAway">${P.awayDistribution.map(b => `<div class="fr"><span>${b.label}</span><div class="bar"><div data-w="${pct(b.people, tot)}" style="background:linear-gradient(90deg,#3ec5ff,${TEAL})"></div></div><b style="text-align:right">${b.people}</b></div>`).join('')}</div><div class="dim" style="font-size:.75rem;margin-top:6px">people per bucket · ${tot} devices</div></div>`);
+    }
+    $('#psSide').innerHTML = side.join('');
+    if ($('#psAway')) new IntersectionObserver((es, o) => { if (es[0].isIntersecting) { o.disconnect(); $$('#psAway .bar div').forEach((d, i) => setTimeout(() => (d.style.width = d.dataset.w + '%'), i * 120)); } }).observe($('#psAway'));
+
+    // combined chart: rating (mood colours), attention (dashed teal), tab focus (faint), laughter/applause (small bars)
+    const T = P.timeline;
+    const hasAtt = T.some(p => p.att != null);
+    if (!has && !hasAtt) $('#cPassive').parentElement.innerHTML = '<div class="empty"><span class="big">🎯</span>No crowd-level readings were recorded.</div>';
+    else lazy('cPassive', {
+      type: 'line',
+      data: {
+        datasets: [
+          { label: 'Rating', data: R.timeline.map(p => ({ x: p.t, y: p.avg })), yAxisID: 'y', tension: .4, borderWidth: 3, pointRadius: 0, spanGaps: true, borderColor: '#7c5cff', backgroundColor: '#7c5cff',
+            segment: { borderColor: s => CP.moodColor((s.p0.parsed.y + s.p1.parsed.y) / 2) } },
+          { label: 'Attention', data: T.map(p => ({ x: p.t, y: p.att })), yAxisID: 'y', tension: .4, borderWidth: 2.5, borderDash: [7, 5], pointRadius: 0, borderColor: TEAL, backgroundColor: TEAL, spanGaps: false },
+          ...(T.some(p => p.focus != null) ? [{ label: 'Tab focus', data: T.map(p => ({ x: p.t, y: p.focus })), yAxisID: 'y', tension: .4, borderWidth: 1.5, pointRadius: 0, borderColor: 'rgba(243,241,255,.28)', backgroundColor: 'rgba(243,241,255,.28)' }] : []),
+          ...(T.some(p => p.laugh != null) ? [{ label: 'Laughter', type: 'bar', data: T.map(p => ({ x: p.t, y: p.laugh })), yAxisID: 'y2', backgroundColor: 'rgba(255,92,168,.6)', borderRadius: 2, maxBarThickness: 5 }] : []),
+          ...(T.some(p => p.clap != null) ? [{ label: 'Applause', type: 'bar', data: T.map(p => ({ x: p.t, y: p.clap })), yAxisID: 'y2', backgroundColor: 'rgba(255,181,71,.55)', borderRadius: 2, maxBarThickness: 5 }] : []),
+        ],
+      },
+      options: {
+        maintainAspectRatio: false, interaction: { mode: 'index', intersect: false },
+        scales: {
+          x: { type: 'linear', ticks: { callback: v => mins(v), maxTicksLimit: 8 }, grid: { display: false } },
+          y: { min: 0, max: 100, ticks: { stepSize: 25 } },
+          y2: { position: 'right', min: 0, max: 300, grid: { display: false }, ticks: { stepSize: 50, callback: v => (v <= 100 ? v : '') } },
+        },
+        plugins: {
+          markers: { list: R.markers },
+          legend: { labels: { boxWidth: 8, padding: 12 } },
+          tooltip: { callbacks: { title: i => mins(i[0].parsed.x), label: c => `${c.dataset.label}: ${c.parsed.y == null ? '—' : c.parsed.y}${c.dataset.label === 'Tab focus' ? '%' : ''}` } },
+        },
+      },
+      plugins: [markerPlugin],
+    });
+
+    // said vs. shown
+    const N = P.norms || {};
+    const reactsOf = m => Object.entries(m.reactions || {}).sort((a, b) => b[1] - a[1]).slice(0, 4).map(([e, n]) => `${e}×${n}`).join(' ');
+    const quotes = m => (m.messages || []).map(x => `<q>${esc(x.text)} <span class="dim">— ${esc(x.name)}</span></q>`).join('');
+    const gh = $('#psGaps');
+    if (!P.saidVsShown.length) gh.innerHTML = `<div class="empty" style="grid-column:1/-1">${C ? 'Ratings and attention told the same story: no stretch where they clearly pulled apart.' : 'Said-vs-shown gaps need a few minutes of ratings alongside attention readings from 5+ people.'}</div>`;
+    P.saidVsShown.forEach(g => {
+      const polite = g.kind === 'polite'; const reacts = reactsOf(g);
+      gh.appendChild(CP.h(`<div class="moment ${g.kind}"><div class="mh"><span style="font-size:1.5rem">${polite ? '🙃' : '🧐'}</span><div><div class="eyebrow">${esc(g.label)} · ${mins(g.start)}–${mins(g.end)}</div>${g.chapter ? `<div style="font-size:.82rem">during “${esc(g.chapter)}”</div>` : ''}</div></div>
+        <div class="vs"><div><div class="k">Rating</div><span class="mv" style="color:${CP.moodColor(g.rating)}">${g.rating}</span></div><div><div class="k">Attention</div><span class="mv" style="color:${TEAL}">${g.attention}</span></div></div>
+        <div class="dim" style="font-size:.78rem;margin-bottom:6px">${polite ? 'Rated above the session norm while attention ran below it' : 'Attention above the session norm while ratings ran below it'}${N.rating != null ? ` (norm: rating ${N.rating}, attention ${N.attention})` : ''}.</div>
+        ${reacts ? `<div style="font-size:.9rem">${reacts}</div>` : ''}${quotes(g)}</div>`));
+    });
+
+    // laughs & applause (applause within a few seconds of a laugh shares its card)
+    if (!S.room && !L.moments.length && !AP.moments.length) $('#psAudioWrap').remove();
+    else {
+      const au = $('#psAudio');
+      const claps = [...AP.moments];
+      const cards = L.moments.map(l => { const i = claps.findIndex(c => Math.abs(c.t - l.t) < 6000); return { ...l, clap: i >= 0 ? claps.splice(i, 1)[0].value : null }; })
+        .concat(claps).sort((a, b) => a.t - b.t);
+      if (!cards.length) au.innerHTML = '<div class="empty" style="grid-column:1/-1">No clear laughter or applause was picked up.</div>';
+      cards.forEach(m => {
+        const laugh = m.kind === 'laugh'; const reacts = reactsOf(m);
+        au.appendChild(CP.h(`<div class="moment ${m.kind}"><div class="mh"><span style="font-size:1.5rem">${laugh ? '😂' : '👏'}</span><div><div class="eyebrow">${laugh ? (m.clap != null ? 'Laughter + applause' : 'Laughter') : 'Applause'} at ${mins(m.t)}</div>${m.marker ? `<div style="font-size:.82rem">during “${esc(m.marker)}”</div>` : ''}</div><span class="spacer"></span><span class="mv" style="color:${laugh ? '#ff5ca8' : '#ffb547'}" title="loudness 0–100">${m.value}</span></div>
+          ${reacts ? `<div style="font-size:.9rem">${reacts}</div>` : ''}${quotes(m)}</div>`));
+      });
+    }
+  }
+
   // zones
   const zoneLabels = ['Rough', 'Meh', 'Okay', 'Good', 'Amazing'];
   $('#zones').innerHTML = R.zonePct.map((z, i) => `<div style="background:${CP.moodColor(i * 25)}" title="${zoneLabels[i]}: ${z}%">${z >= 6 ? z + '%' : ''}</div>`).join('');
@@ -217,9 +333,10 @@
   // chapters
   if (R.chapters.length) {
     $('#chaptersCard').classList.remove('hidden');
-    $('#chapters').innerHTML = `<table><thead><tr><th>Section</th><th>Started</th><th>Length</th><th>Mood</th><th></th><th>Reactions</th><th>Messages</th></tr></thead><tbody>
+    const attCol = !!P && R.chapters.some(c => c.attention != null);
+    $('#chapters').innerHTML = `<table><thead><tr><th>Section</th><th>Started</th><th>Length</th><th>Mood</th><th></th>${attCol ? '<th>Attention</th>' : ''}<th>Reactions</th><th>Messages</th></tr></thead><tbody>
       ${R.chapters.map(c => `<tr><td><b>${esc(c.label)}</b></td><td>${mins(c.t)}</td><td>${mins(c.durationMs)}</td><td style="color:${CP.moodColor(c.avg ?? 50)};font-weight:700">${nf(c.avg)}</td>
-      <td><div class="mini-bar"><div style="width:${c.avg ?? 0}%;background:${CP.moodColor(c.avg ?? 50)}"></div></div></td><td>${c.reactions}</td><td>${c.messages}</td></tr>`).join('')}</tbody></table>`;
+      <td><div class="mini-bar"><div style="width:${c.avg ?? 0}%;background:${CP.moodColor(c.avg ?? 50)}"></div></div></td>${attCol ? `<td style="color:${TEAL};font-weight:700" title="attention index">${nf(c.attention)}</td>` : ''}<td>${c.reactions}</td><td>${c.messages}</td></tr>`).join('')}</tbody></table>`;
   }
 
   // funnel

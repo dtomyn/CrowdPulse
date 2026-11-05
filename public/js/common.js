@@ -193,6 +193,7 @@
 
   // ---------- streaming pulse chart (canvas) ----------
   // Smooth catmull-rom line coloured by mood, with glow + gradient fill + optional markers.
+  // Points may carry `att` (passive attention index); when present a dashed teal attention line and a legend are drawn.
   CP.pulseChart = (canvas, { windowMs = 10 * 60 * 1000, showOnline = true } = {}) => {
     const ctx = canvas.getContext('2d');
     let pts = [], markers = [], hover = null, dpr = Math.min(2, devicePixelRatio || 1), start = null;
@@ -227,33 +228,71 @@
         ctx.fillStyle = 'rgba(255,255,255,.7)'; ctx.textAlign = 'left'; ctx.fillText('📍 ' + m.label, x + 4 * dpr, padT + 10 * dpr);
       });
       const line = vis.filter(p => p.avg != null);
-      if (line.length > 1) {
-        const path = new Path2D(); const P = line.map(p => [X(p.t), Y(p.avg)]);
-        path.moveTo(...P[0]);
+      const attLine = vis.filter(p => p.att != null);
+      // smooth catmull-rom path through [x, y] points
+      const curve = P => {
+        const path = new Path2D(); path.moveTo(...P[0]);
         for (let i = 0; i < P.length - 1; i++) {
           const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || p2;
           path.bezierCurveTo(p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6, p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6, p2[0], p2[1]);
         }
+        return path;
+      };
+      if (line.length > 1) {
+        const P = line.map(p => [X(p.t), Y(p.avg)]);
+        const path = curve(P);
         const grad = ctx.createLinearGradient(0, Y(100), 0, Y(0));
         [100, 75, 50, 25, 0].forEach((v, i) => grad.addColorStop(i / 4, CP.moodColor(v)));
         const fill = new Path2D(path); fill.lineTo(P[P.length - 1][0], H - padB); fill.lineTo(P[0][0], H - padB); fill.closePath();
         const fg = ctx.createLinearGradient(0, padT, 0, H - padB); fg.addColorStop(0, 'rgba(124,92,255,.35)'); fg.addColorStop(1, 'rgba(124,92,255,0)');
         ctx.fillStyle = fg; ctx.fill(fill);
         ctx.save(); ctx.shadowColor = 'rgba(255,92,168,.7)'; ctx.shadowBlur = 16 * dpr; ctx.strokeStyle = grad; ctx.lineWidth = 3 * dpr; ctx.lineJoin = 'round'; ctx.stroke(path); ctx.restore();
+      }
+      // attention index: dashed teal line with a soft glow (only when passive data exists)
+      if (attLine.length > 1) {
+        const A = attLine.map(p => [X(p.t), Y(p.att)]);
+        const apath = curve(A);
+        ctx.save(); ctx.setLineDash([7 * dpr, 5 * dpr]); ctx.lineDashOffset = -anim * 6 * dpr; ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        ctx.shadowColor = 'rgba(46,230,214,.75)'; ctx.shadowBlur = 10 * dpr; ctx.strokeStyle = 'rgba(46,230,214,.92)'; ctx.lineWidth = 2.2 * dpr; ctx.stroke(apath);
+        ctx.restore();
+        const la = A[A.length - 1];
+        ctx.fillStyle = 'rgba(46,230,214,.25)'; ctx.beginPath(); ctx.arc(la[0], la[1], 7 * dpr, 0, 6.28); ctx.fill();
+        ctx.fillStyle = '#2ee6d6'; ctx.beginPath(); ctx.arc(la[0], la[1], 3.5 * dpr, 0, 6.28); ctx.fill();
+        // legend
+        ctx.save(); ctx.font = `600 ${10 * dpr}px Inter, sans-serif`; ctx.textAlign = 'left';
+        const lw = 18 * dpr, gap = 6 * dpr, tMood = ctx.measureText('Mood').width, tAtt = ctx.measureText('Attention').width;
+        const total = lw + gap + tMood + 14 * dpr + lw + gap + tAtt; let lx = W - 10 * dpr - total; const ly = padT + 2 * dpr;
+        ctx.fillStyle = 'rgba(14,10,43,.6)'; ctx.fillRect(lx - 8 * dpr, ly - 8 * dpr, total + 16 * dpr, 16 * dpr);
+        ctx.lineWidth = 2.5 * dpr; ctx.strokeStyle = '#ff5ca8'; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + lw, ly); ctx.stroke();
+        ctx.fillStyle = 'rgba(255,255,255,.75)'; ctx.fillText('Mood', lx + lw + gap, ly + 3.5 * dpr); lx += lw + gap + tMood + 14 * dpr;
+        ctx.setLineDash([4 * dpr, 3 * dpr]); ctx.strokeStyle = '#2ee6d6'; ctx.beginPath(); ctx.moveTo(lx, ly); ctx.lineTo(lx + lw, ly); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillText('Attention', lx + lw + gap, ly + 3.5 * dpr);
+        ctx.restore();
+      }
+      if (line.length > 1) {
+        const P = [X(line[line.length - 1].t), Y(line[line.length - 1].avg)];
         // live head dot
-        const last = P[P.length - 1]; anim += 0.06; const pr = (6 + Math.sin(anim) * 3) * dpr;
-        ctx.fillStyle = CP.moodColor(line[line.length - 1].avg, .3); ctx.beginPath(); ctx.arc(last[0], last[1], pr * 2, 0, 6.28); ctx.fill();
-        ctx.fillStyle = CP.moodColor(line[line.length - 1].avg); ctx.beginPath(); ctx.arc(last[0], last[1], 5 * dpr, 0, 6.28); ctx.fill();
+        anim += 0.06; const pr = (6 + Math.sin(anim) * 3) * dpr;
+        ctx.fillStyle = CP.moodColor(line[line.length - 1].avg, .3); ctx.beginPath(); ctx.arc(P[0], P[1], pr * 2, 0, 6.28); ctx.fill();
+        ctx.fillStyle = CP.moodColor(line[line.length - 1].avg); ctx.beginPath(); ctx.arc(P[0], P[1], 5 * dpr, 0, 6.28); ctx.fill();
+      } else if (attLine.length > 1) anim += 0.06;
+      const hoverSet = line.length > 1 ? line : attLine.length > 1 ? attLine : null;
+      if (hoverSet) {
         // hover crosshair
         if (hover != null) {
-          const near = line.reduce((a, p) => (Math.abs(X(p.t) - hover) < Math.abs(X(a.t) - hover) ? p : a), line[0]);
-          const x = X(near.t), y = Y(near.avg);
+          const near = hoverSet.reduce((a, p) => (Math.abs(X(p.t) - hover) < Math.abs(X(a.t) - hover) ? p : a), hoverSet[0]);
+          const x = X(near.t);
           ctx.strokeStyle = 'rgba(255,255,255,.3)'; ctx.beginPath(); ctx.moveTo(x, padT); ctx.lineTo(x, H - padB); ctx.stroke();
-          ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, 4 * dpr, 0, 6.28); ctx.fill();
-          const label = `${Math.round(near.avg)} ${CP.mood(near.avg).emoji}  ·  ${near.online ?? '?'} online  ·  ${start ? CP.fmtClock(near.t - start) : CP.fmtTime(near.t)}`;
+          if (near.avg != null) { ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, Y(near.avg), 4 * dpr, 0, 6.28); ctx.fill(); }
+          if (near.att != null) { ctx.fillStyle = '#2ee6d6'; ctx.beginPath(); ctx.arc(x, Y(near.att), 4 * dpr, 0, 6.28); ctx.fill(); }
+          const parts = [];
+          if (near.avg != null) parts.push(`${Math.round(near.avg)} ${CP.mood(near.avg).emoji}`);
+          if (near.att != null) parts.push(`👁️ ${Math.round(near.att)} attention`);
+          parts.push(`${near.online ?? '?'} online`, start ? CP.fmtClock(near.t - start) : CP.fmtTime(near.t));
+          const label = parts.join('  ·  ');
           ctx.font = `600 ${11 * dpr}px Inter, sans-serif`; const tw = ctx.measureText(label).width + 16 * dpr;
-          const bx = Math.min(W - tw - 4, Math.max(padL, x - tw / 2));
-          ctx.fillStyle = 'rgba(14,10,43,.92)'; ctx.fillRect(bx, padT, tw, 22 * dpr); ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.fillText(label, bx + 8 * dpr, padT + 15 * dpr);
+          const bx = Math.min(W - tw - 4, Math.max(padL, x - tw / 2)), by = attLine.length > 1 ? padT + 16 * dpr : padT;
+          ctx.fillStyle = 'rgba(14,10,43,.92)'; ctx.fillRect(bx, by, tw, 22 * dpr); ctx.fillStyle = '#fff'; ctx.textAlign = 'left'; ctx.fillText(label, bx + 8 * dpr, by + 15 * dpr);
         }
       } else {
         ctx.fillStyle = 'rgba(255,255,255,.35)'; ctx.textAlign = 'center'; ctx.font = `${13 * dpr}px Inter, sans-serif`;

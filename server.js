@@ -24,6 +24,9 @@ const io = new Server(server, { cors: { origin: '*' } });
 app.use(express.json({ limit: '200kb' }));
 app.use(express.static(path.join(__dirname, 'public'), { extensions: ['html'] }));
 app.use('/vendor/chart.js', express.static(path.join(__dirname, 'node_modules/chart.js/dist')));
+// Brand mark as the favicon (browsers ask for /favicon.ico on every page)
+const FAVICON = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><defs><linearGradient id="g" x1="0" x2="1"><stop offset="0" stop-color="#7c5cff"/><stop offset=".55" stop-color="#ff5ca8"/><stop offset="1" stop-color="#ffb547"/></linearGradient></defs><rect width="64" height="64" rx="18" fill="url(#g)"/><path d="M8 32h11l8-19 11 38 8-19h10" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+app.get('/favicon.ico', (req, res) => res.type('image/svg+xml').set('Cache-Control', 'public, max-age=86400').send(FAVICON));
 // The explainer film's director page (film/studio). Only served when rendering the film.
 if (process.env.CROWDPULSE_STUDIO) app.use('/studio', express.static(path.join(__dirname, 'film/studio')));
 

@@ -65,6 +65,26 @@ Data is stored in `data/db.json`.
 - Top contributors leaderboard, questions, poll results
 - Export to PDF (print), CSV and JSON
 
+## Passive signals
+
+Besides what people rate, CrowdPulse can show what the room shows without anyone pressing a button. The host turns each source on per session (in the new-session form or the control room's Live settings):
+
+| Source | Default | Where it runs | What leaves the device |
+|---|---|---|---|
+| 👀 Tab focus | On | Each attendee's page | How much of the last few seconds the session tab was in view, and an interaction count |
+| 📷 Attendee cameras | Off, and each attendee opts in | Each attendee's own device (MediaPipe face analysis in the browser) | Three numbers: attention, positive expression, fatigue |
+| 🎙️ Room sensor | Off | The presenter's laptop camera and microphone | Faces counted and how many look forward, plus laughter, applause and loudness estimates |
+
+How it's kept safe:
+
+- **No raw data:** no images, video or audio are sent or stored, only the numbers above (`lib/passive.js` drops anything else).
+- **Crowd figures only:** they appear only once at least **5 people** contribute, so no one can be singled out, and they're exported as crowd figures only.
+- **Kept apart from ratings:** passive data is never blended into the rating score. It's shown as its own **Attention** line, so you can see where what people said and what the room showed disagree. The coach flags "polite but distracted" moments.
+- **Camera use is visible:** the camera only starts after a click, shows a "camera on" indicator with a Stop button, and previews exactly what is sent.
+- **Know the rules where you present:** cameras need HTTPS or localhost (phones on plain `http://` over Wi-Fi can't use them). Emotion recognition is restricted in workplaces and education under the EU AI Act, and face data is biometric data under GDPR and laws like Illinois's BIPA. Use these sources only where that's appropriate, and tell the room.
+
+Expression and attention estimates are approximate. Treat them as a hint alongside the ratings, not a verdict. The demo audience simulator produces passive data too, so you can preview everything without real people.
+
 ## Explainer video
 
 A narrated walkthrough of the app, filmed from the real pages one exact frame at a time, lives in `film/`:

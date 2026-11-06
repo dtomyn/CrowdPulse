@@ -2,7 +2,7 @@
 
 Real-time audience rating for talks, workshops and meetings. Attendees scan a QR code (or type a 6-character code), rate the session as it happens, chat, ask questions and vote in polls. The presenter gets a live control room, a big-screen stage view and a detailed report afterwards.
 
-See: https://youtu.be/JNMJ8OB89lg
+See: https://youtu.be/oAsbwa2N86s
 
 ## Run it
 

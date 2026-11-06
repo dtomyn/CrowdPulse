@@ -6,6 +6,7 @@
   $('#brandMark').outerHTML = `<a href="/" class="brand-mark" style="flex:none"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-7 4 14 3-7h6"/></svg></a>`;
 
   let me = CP.profile();
+  let myPub = me.pid; // replaced by the server's public id for us on join
   let state = null; // snapshot from server
   let myRating = null, mode = CP.store.get('cp.mode', 'slider'), widget = null;
   let tab = 'rate', unread = { chat: 0, qa: 0, polls: 0 };
@@ -22,6 +23,9 @@
     socket.emit('join', { code, ...me }, res => {
       if (res.error) { $('#mainCol').innerHTML = `<div class="card empty"><span class="big">🔍</span>${esc(res.error)}<br><br><a class="btn" href="/">Try another code</a></div>`; $('#evTitle').textContent = 'Not found'; return; }
       state = res; myRating = res.myRating;
+      // the server may hand out a fresh id (e.g. an old or invalid one); others only ever see our public id
+      if (res.pid && res.pid !== me.pid) { me = { ...me, pid: res.pid }; CP.saveProfile(me); }
+      myPub = res.pub || me.pid;
       if (!CP.store.get('cp.welcomed.' + code)) { CP.store.set('cp.welcomed.' + code, 1); setTimeout(profileModal, 400, true); }
       renderAll();
     });
@@ -189,7 +193,7 @@
   // ---------- chat ----------
   function renderChat() {
     const list = $('#chat'); list.innerHTML = '';
-    state.messages.forEach(m => list.appendChild(CP.renderMsg(m, me.pid)));
+    state.messages.forEach(m => list.appendChild(CP.renderMsg(m, myPub)));
     if (!state.messages.length) list.innerHTML = `<div class="empty"><span class="big">💬</span>Be the first to say hi!</div>`;
     list.scrollTop = list.scrollHeight;
     const p = state.messages.find(m => m.pinned); setPinned(p);
@@ -198,9 +202,9 @@
     state.messages.push(m);
     const list = $('#chat'); list.querySelector('.empty')?.remove();
     const near = list.scrollHeight - list.scrollTop - list.clientHeight < 120;
-    list.appendChild(CP.renderMsg(m, me.pid));
-    if (near || m.pid === me.pid) list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
-    if (tab !== 'chat' && m.pid !== me.pid) bumpUnread('chat');
+    list.appendChild(CP.renderMsg(m, myPub));
+    if (near || m.pid === myPub) list.scrollTo({ top: list.scrollHeight, behavior: 'smooth' });
+    if (tab !== 'chat' && m.pid !== myPub) bumpUnread('chat');
   }
   function setPinned(m) {
     $('#pinned').innerHTML = m ? `<div class="pinned">📌 <div style="min-width:0"><b style="color:${esc(m.color)}">${esc(m.name)}</b> ${esc(m.text)}</div></div>` : '';
@@ -223,7 +227,7 @@
     if (!state.questions.length) { host.innerHTML = `<div class="empty"><span class="big">🙋</span>No questions yet. Got one? Ask away!</div>`; return; }
     host.innerHTML = '';
     state.questions.forEach(q => {
-      const mine = q.voters.includes(me.pid);
+      const mine = q.voters.includes(myPub);
       const el = h(`<div class="q ${q.answered ? 'answered' : ''}"><button class="vote ${mine ? 'on' : ''}" aria-label="Upvote">▲<span class="n">${q.votes}</span></button>
         <div class="qtext">${esc(q.text)}<div class="meta">${esc(q.avatar)} ${esc(q.name)} · ${CP.fmtTime(q.t)} ${q.answered ? '· ✅ Answered' : ''}</div></div></div>`);
       el.querySelector('.vote').onclick = () => socket.emit('vote-q', q.id);

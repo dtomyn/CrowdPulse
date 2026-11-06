@@ -11,10 +11,10 @@
   const CP = window.CP;
   const { $, esc, h } = CP;
 
-  const MP_VER = '0.10.14';
-  const MP_BUNDLE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}/vision_bundle.mjs`;
-  const MP_WASM = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VER}/wasm`;
-  const MP_MODEL = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+  // MediaPipe tasks-vision (version pinned in package.json), served by this server
+  const MP_BUNDLE = '/vendor/mediapipe/vision_bundle.mjs';
+  const MP_WASM = '/vendor/mediapipe/wasm';
+  const MP_MODEL = '/vendor/models/face_landmarker.task'; // downloaded once and hash-checked by the server (lib/models.js)
   const MIN_CROWD = 5;
   const SEND_MS = 5000;      // one report every ~5 s
   const SAMPLE_MS = 500;     // tab visibility sampling
@@ -68,7 +68,7 @@
 
   // ---------- camera: support checks and friendly errors ----------
   const ERRORS = {
-    insecure: ['🔒 The camera needs a secure link', "Browsers only allow the camera on https pages or on localhost. If you joined on a phone over plain http on the Wi-Fi, the camera can't be used on this page. Everything else still works, and you can ask the host for an https link."],
+    insecure: ['🔒 The camera needs a secure link', "Browsers only allow the camera on https pages or on localhost. If you joined on a phone over plain http on the Wi-Fi, the camera can't be used on this page. Everything else still works, and the host can switch on https (they start CrowdPulse with npm run secure)."],
     unsupported: ['📷 Camera not available', "This browser doesn't let web pages use a camera. Everything else still works."],
     denied: ['🚫 Camera permission blocked', "That's completely fine. If you change your mind, allow the camera for this site (usually via the icon in the address bar or your browser settings) and try again."],
     nocam: ['📷 No camera found', "We couldn't find a camera on this device. Everything else still works."],

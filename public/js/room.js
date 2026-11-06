@@ -5,10 +5,10 @@
 // No frames, no audio, no landmarks. Face analysis runs locally with MediaPipe Face Landmarker;
 // laughter and applause are rough estimates from loudness patterns (Web Audio AnalyserNode).
 (function () {
-  const MP_VERSION = '0.10.14';
-  const MP_BUNDLE = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}/vision_bundle.mjs`;
-  const MP_WASM = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}/wasm`;
-  const MP_MODEL = 'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
+  // MediaPipe tasks-vision (version pinned in package.json), served by this server
+  const MP_BUNDLE = '/vendor/mediapipe/vision_bundle.mjs';
+  const MP_WASM = '/vendor/mediapipe/wasm';
+  const MP_MODEL = '/vendor/models/face_landmarker.task'; // downloaded once and hash-checked by the server (lib/models.js)
   const SEND_MS = 2000, FACE_MS = 333, AUDIO_MS = 50;
   const YAW_MAX = 28, PITCH_MAX = 24; // degrees from facing the camera that still count as "looking forward"
 

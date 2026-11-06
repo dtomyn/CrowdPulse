@@ -6,13 +6,17 @@
   "type": "commonjs",
   "scripts": {
     "start": "node server.js",
-    "dev": "node --watch server.js"
+    "secure": "node server.js --https",
+    "dev": "node --watch server.js",
+    "dev:secure": "node --watch server.js --https"
   },
   "license": "MIT",
   "dependencies": {
+    "@mediapipe/tasks-vision": "0.10.14",
     "chart.js": "^4.6.1",
     "express": "^4.22.3",
     "qrcode": "^1.5.4",
+    "selfsigned": "^5.5.0",
     "socket.io": "^4.8.4"
   }
 }

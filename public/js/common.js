@@ -45,7 +45,9 @@
     let p = CP.store.get('cp.profile');
     if (!p) {
       const pick = a => a[Math.floor(Math.random() * a.length)];
-      p = { pid: 'p_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36), name: pick(ADJ) + ' ' + pick(NOUN), avatar: pick(AVATARS), color: pick(COLORS) };
+      // the id is this browser's credential for the session, so it comes from the crypto RNG
+      const rnd = Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join('');
+      p = { pid: 'p_' + rnd, name: pick(ADJ) + ' ' + pick(NOUN), avatar: pick(AVATARS), color: pick(COLORS) };
       CP.store.set('cp.profile', p);
     }
     return p;
@@ -340,13 +342,25 @@
       </div></div>`);
     return el;
   };
-  function linkify(s) { return s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>'); }
+  function linkify(s) { return s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'); }
+
+  // Shown to the host when attendee cameras are on but the join link is plain http (phones block the camera there).
+  // Returns an element, or null when the link is already https.
+  CP.httpsHint = joinUrl => {
+    if (!/^http:/i.test(joinUrl || '')) return null;
+    const el = CP.h(`<div class="https-hint"><span>📷</span><div><b>Phones can only use their cameras on an https link</b>, and this join link is plain http.
+      Stop CrowdPulse and start it again with <code>npm run secure</code><button class="btn sm ghost" type="button">Copy</button>.
+      It makes its own certificate, so there's nothing to buy. The first time, phones show a "not private" warning: tap <b>Advanced → Proceed</b>.</div></div>`);
+    el.querySelector('button').onclick = () => CP.copy('npm run secure', 'Command copied');
+    return el;
+  };
 
   CP.locationText = loc => {
     if (!loc) return '';
     const parts = [];
-    if (loc.mode !== 'virtual' && (loc.venue || loc.address)) parts.push('📍 ' + [loc.venue, loc.address].filter(Boolean).join(', '));
-    if (loc.mode !== 'in-person') parts.push(loc.url ? `💻 <a href="${CP.esc(loc.url)}" target="_blank" rel="noopener">Join online</a>` : '💻 Virtual');
+    if (loc.mode !== 'virtual' && (loc.venue || loc.address)) parts.push('📍 ' + [loc.venue, loc.address].filter(Boolean).map(CP.esc).join(', '));
+    const safeUrl = /^https?:\/\//i.test(loc.url || '') ? loc.url : '';
+    if (loc.mode !== 'in-person') parts.push(safeUrl ? `💻 <a href="${CP.esc(safeUrl)}" target="_blank" rel="noopener noreferrer">Join online</a>` : '💻 Virtual');
     return parts.join(' &nbsp;·&nbsp; ');
   };
 

@@ -270,7 +270,11 @@
     };
     SETTINGS.forEach(([k, l]) => sw(k, l));
     host.appendChild(h(`<div class="set-sub">👁️ Passive signals · crowd figures from 5+ people</div>`));
-    PASSIVE_SETTINGS.forEach(([k, l, help]) => { sw(k, l); host.appendChild(h(`<div class="set-help">${help}</div>`)); });
+    PASSIVE_SETTINGS.forEach(([k, l, help]) => {
+      sw(k, l); host.appendChild(h(`<div class="set-help">${help}</div>`));
+      const hint = k === 'passiveCamera' && settingOn(S.event.settings, k) && CP.httpsHint(summary?.joinUrl);
+      if (hint) host.appendChild(hint);
+    });
     paintPassive();
     room.sync(S.event);
   }

@@ -25,7 +25,7 @@ const MAX_PARTICIPANTS = 5000;    // per session: stops a script from filling me
 const MAX_QUESTIONS = 2000;
 const MAX_REACTIONS = 100000;
 const RESERVED_PIDS = new Set(['presenter', 'system']);
-const SETTING_KEYS = ['chat', 'qa', 'reactions', 'publicReport', 'showCrowdMood', 'passiveTab', 'passiveCamera', 'passiveRoom'];
+const SETTING_KEYS = ['chat', 'qa', 'reactions', 'publicReport', 'showCrowdMood', 'listed', 'passiveTab', 'passiveCamera', 'passiveRoom'];
 
 store.load();
 const app = express();
@@ -60,7 +60,8 @@ app.use((req, res, next) => {
     'X-Frame-Options': 'SAMEORIGIN',
     // admin keys travel in ?key= links, so never leak the URL to other sites
     'Referrer-Policy': 'no-referrer',
-    'Permissions-Policy': 'camera=(self), microphone=(self), geolocation=()',
+    // accelerometer/gyroscope: the Tilt rating style reads the phone's orientation
+    'Permissions-Policy': 'camera=(self), microphone=(self), geolocation=(), accelerometer=(self), gyroscope=(self), magnetometer=()',
     // older Safari doesn't count same-host websockets as 'self', so name this host's ws/wss address explicitly
     'Content-Security-Policy': CSP.replace('{ws}', /^[a-z0-9.:[\]-]+$/i.test(req.headers.host || '') ? `ws://${req.headers.host} wss://${req.headers.host}` : ''),
   });
@@ -251,6 +252,7 @@ app.post('/api/events', checkPin, (req, res) => {
     accent: isColor(b.accent) ? b.accent : '#7c5cff',
     settings: mergeSettings({
       chat: true, qa: true, reactions: true, publicReport: false, showCrowdMood: true,
+      listed: false, // shown on the home page's "Happening now" list (off unless the host opts in)
       // passive signals: tab focus is on by default; cameras and the room microphone are opt-in by the host
       passiveTab: true, passiveCamera: false, passiveRoom: false,
     }, b.settings),
@@ -294,6 +296,26 @@ app.post('/api/events/:code/duplicate', checkKey, (req, res) => {
   delete copy.lastPulse; delete copy.dirty;
   store.events[code] = copy; store.save();
   res.json(summary(copy));
+});
+
+// Sessions the host chose to list on the home page: live ones first, then those starting soon. Anyone can read this,
+// so it only carries what the join page already shows, plus the crowd mood when the host shares it with attendees.
+const LIST_MAX = 50, LIST_AHEAD_MS = 7 * 86400000;
+app.get('/api/live', (req, res) => {
+  const now = Date.now();
+  const list = Object.values(store.events).filter(ev => {
+    if (!ev.settings?.listed) return false;
+    if (ev.status === 'live') return true;
+    if (ev.status !== 'scheduled') return false;
+    const t = new Date(ev.startsAt).getTime(); // skip sessions that were never started and are long overdue
+    return t > now - (ev.durationMin || 60) * 60000 && t < now + LIST_AHEAD_MS;
+  }).map(ev => ({
+    code: ev.code, title: ev.title, presenter: ev.presenter, status: ev.status, startsAt: ev.startsAt, startedAt: ev.startedAt,
+    durationMin: ev.durationMin, accent: ev.accent, location: { mode: ev.location?.mode, venue: ev.location?.venue || '' },
+    online: online(ev.code),
+    mood: ev.status === 'live' && ev.settings.showCrowdMood && ev.lastPulse?.avg != null ? Math.round(ev.lastPulse.avg) : null,
+  })).sort((a, b) => (a.status === b.status ? (a.status === 'live' ? b.online - a.online : new Date(a.startsAt) - new Date(b.startsAt)) : a.status === 'live' ? -1 : 1));
+  res.set('Cache-Control', 'no-store').json(list.slice(0, LIST_MAX));
 });
 
 app.get('/api/events/:code/public', (req, res) => {

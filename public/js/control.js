@@ -254,7 +254,7 @@
   socket.on('confetti', () => CP.confetti());
 
   // ---------- settings ----------
-  const SETTINGS = [['chat', '💬 Live chat'], ['qa', '🙋 Q&A'], ['reactions', '🎆 Reactions'], ['showCrowdMood', '📊 Show crowd mood to attendees'], ['publicReport', '🏆 Share report with attendees']];
+  const SETTINGS = [['chat', '💬 Live chat'], ['qa', '🙋 Q&A'], ['reactions', '🎆 Reactions'], ['showCrowdMood', '📊 Show crowd mood to attendees'], ['publicReport', '🏆 Share report with attendees'], ['listed', '🌍 List on the home page']];
   const PASSIVE_SETTINGS = [
     ['passiveTab', '🗂️ Tab focus', 'Each attendee page reports how much of the time the session tab was in view. On by default.'],
     ['passiveCamera', '📷 Attendee cameras (opt-in)', 'Attendees may opt in to on-device face analysis. Only attention, positive and fatigue numbers leave their phone.'],

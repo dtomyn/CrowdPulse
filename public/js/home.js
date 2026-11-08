@@ -46,3 +46,30 @@ setInterval(() => {
   faces.forEach((f, i) => f.classList.toggle('on', i === Math.min(4, Math.floor(v / 20))));
   if (Math.random() < .35) CP.floatEmoji(['👏', '🔥', '🤯', '❤️', '😂'][Math.floor(Math.random() * 5)], { x: 55 + Math.random() * 40, size: 1.6 });
 }, 1000);
+
+// "Happening now": sessions their hosts chose to list publicly
+const nowList = $('#nowList');
+const ago = t => { const m = Math.max(0, Math.round((Date.now() - new Date(t)) / 60000)); return m < 1 ? 'just started' : m < 60 ? `${m} min in` : `${Math.floor(m / 60)}h ${m % 60}m in`; };
+async function loadNow() {
+  let list;
+  try { const r = await fetch('/api/live', { cache: 'no-store' }); if (!r.ok) return; list = await r.json(); } catch { return; }
+  $('#nowEmpty').classList.toggle('hidden', list.length > 0);
+  const live = list.filter(e => e.status === 'live').length;
+  $('#nowCount').textContent = list.length ? `${live} live · ${list.length - live} coming up` : '';
+  nowList.innerHTML = list.map(e => {
+    const where = { 'in-person': '🏢 In person', virtual: '💻 Virtual', hybrid: '🌐 Hybrid' }[e.location?.mode] || '';
+    const meta = [e.presenter && '🎤 ' + CP.esc(e.presenter), where + (e.location?.venue && e.location.mode !== 'virtual' ? ' · ' + CP.esc(e.location.venue) : '')].filter(Boolean).join(' &nbsp;·&nbsp; ');
+    const when = e.status === 'live' ? `${ago(e.startedAt || e.startsAt)} · ${e.online} in the room` : `🗓️ ${CP.fmtDate(e.startsAt)}`;
+    const mood = e.mood != null ? `<span class="mood" style="color:${CP.moodColor(e.mood)}" title="Crowd mood">${CP.mood(e.mood).emoji} ${e.mood}</span>` : '';
+    return `<article class="card nowcard" style="--ac:${CP.esc(e.accent)}">
+      <div class="row"><span class="pill ${e.status === 'live' ? 'live' : 'scheduled'}">${e.status === 'live' ? 'LIVE' : 'SOON'}</span><span class="spacer"></span>${mood}</div>
+      <h3>${CP.esc(e.title)}</h3>
+      ${meta ? `<div class="meta">${meta}</div>` : ''}
+      <div class="meta">${when}</div>
+      <a class="btn ${e.status === 'live' ? 'primary' : ''} sm" href="/e/${encodeURIComponent(e.code)}">${e.status === 'live' ? 'Join →' : 'Wait in the lobby →'}</a>
+    </article>`;
+  }).join('');
+}
+loadNow();
+setInterval(() => { if (!document.hidden) loadNow(); }, 10000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) loadNow(); });

@@ -35,7 +35,7 @@
     phone: { el: $('#d-phone'), frame: $('#f-phone'), off: [14, 14], size: [418, 872] },
   };
   for (const d of Object.values(DEV)) { d.st = { x: 0, y: 0, s: 1, o: 0 }; d.goal = { ...d.st }; }
-  const paintDev = d => { d.el.style.transform = `translate(${d.st.x}px,${d.st.y}px) scale(${d.st.s})`; d.el.style.opacity = d.st.o; d.el.style.visibility = d.st.o < .01 ? 'hidden' : 'visible'; };
+  const paintDev = d => { d.el.style.transform = `translate(${d.st.x}px,${d.st.y}px) scale(${d.st.s}) rotate(${d.rot || 0}deg)`; d.el.style.opacity = d.st.o; d.el.style.visibility = d.st.o < .01 ? 'hidden' : 'visible'; };
   const LAYOUTS = {
     full: { full: { x: 0, y: 0, s: 1, o: 1 } },
     desk: { desk: { x: 181, y: 46, s: 0.86, o: 1 } },
@@ -222,7 +222,21 @@
     const method = (opts.method || 'GET').toUpperCase();
     if (url === '/api/events' && method === 'POST') { created = true; return studioSummary(); }
     if (url === '/api/events') return created ? [studioSummary()] : [];
+    if (url === '/api/live') return liveList();
     return undefined;
+  };
+  // The home page's "Happening now": the film's session (listed by the host in step one) and two others in the building
+  const liveList = () => {
+    const e = S.ev, now = Date.now(), live = e?.status === 'live';
+    const ours = e && { code: e.code, title: e.title, presenter: e.presenter, status: e.status, startsAt: e.startsAt, startedAt: e.startedAt, durationMin: e.durationMin,
+      accent: e.accent, location: { mode: e.location?.mode, venue: e.location?.venue || '' }, online: S.online.size, mood: live && e.lastPulse?.avg != null ? Math.round(e.lastPulse.avg) : null };
+    const others = [
+      { code: 'KX4P7M', title: 'Accessibility clinic: designing for everyone', presenter: 'Priya Shah', status: 'live', startsAt: new Date(now - 23 * 60000).toISOString(), startedAt: now - 23 * 60000,
+        durationMin: 60, accent: '#2ee6a6', location: { mode: 'in-person', venue: 'Room 4B' }, online: 18, mood: 74 },
+      { code: 'HN8RQ2', title: 'Data storytelling 101', presenter: 'Tom Okafor', status: 'scheduled', startsAt: new Date(now + 26 * 3600000).toISOString(), startedAt: null,
+        durationMin: 45, accent: '#ffb547', location: { mode: 'virtual', venue: '' }, online: 0, mood: null },
+    ];
+    return [ours, ...others].filter(Boolean).sort((a, b) => (a.status === b.status ? 0 : a.status === 'live' ? -1 : 1));
   };
   const studioSummary = () => ({ ...real, status: S.ev?.status || 'scheduled', stats: { participants: 0, online: 0, ratings: 0, messages: 0, reactions: 0, avg: null }, simulating: false });
 
@@ -231,7 +245,7 @@
   // ============================================================
   const PHONE_ME = { pid: 'p_jordan', name: 'Guest 4821', avatar: '🙂', color: '#7c5cff' };
   const CODE = () => real.code;
-  const MODES = [['🎚️', 'Slider'], ['😊', 'Smileys'], ['⭐', 'Stars'], ['🎛️', 'Rotary dial'], ['🌤️', 'Weather'], ['🌡️', 'Thermometer'], ['👍', 'Thumbs'], ['🔮', 'Vibes']];
+  const MODES = [['🎚️', 'Slider'], ['😊', 'Smileys'], ['⭐', 'Stars'], ['🎛️', 'Rotary dial'], ['🌤️', 'Weather'], ['🌡️', 'Thermometer'], ['👍', 'Thumbs'], ['🔮', 'Vibes'], ['📱', 'Tilt']];
   const brandSvg = '<svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-7 4 14 3-7h6"/></svg>';
   const rateMode = (m, i) => () => { sideOn(i); click('phone', `#modes [data-m="${m}"]`, { move: 500 }); };
   const dial = (t, a0, a1) => { const r = el('phone', '.rt-dial svg').getBoundingClientRect(); const a = (a0 + (a1 - a0) * t) * Math.PI / 180, cx = r.left + r.width / 2, cy = r.top + r.height / 2; return [cx + Math.sin(a) * r.width * 0.36, cy - Math.cos(a) * r.width * 0.36]; };
@@ -273,13 +287,14 @@
           [5500, () => board('Hybrid location', 'Venue and meeting link both shown for a hybrid session')],
           [6000, () => click('desk', '#create [name=url]', { then: () => type('desk', '#create [name=url]', 'https://meet.example.com/design', { cps: 34 }) })],
         ] },
-        { id: 'create-3', say: 'Choose an accent colour, switch on the features you want, and create it.', do: [
+        { id: 'create-3', say: 'Choose an accent colour, switch on the features you want, list it on the home page if you like, and create it.', min: 5000, do: [
           [0, () => scrollDev('desk', '#swatches', 600)],
           [650, () => focus('desk', '#swatches', { fill: 0.75, max: 1.9, dy: 110 })],
           [700, () => click('desk', '#swatches button:nth-child(1)')],
           [1700, () => click('desk', '#create label.switch:nth-of-type(5) .track')],
-          [3000, () => click('desk', '#create button.primary', { then: () => later(80, () => scrollDev('desk', null, 1)) })],
-          [3500, () => reset(900)],
+          [2300, () => click('desk', '#create [name=listed] + .track')],
+          [3600, () => click('desk', '#create button.primary', { then: () => later(80, () => scrollDev('desk', null, 1)) })],
+          [4100, () => reset(900)],
         ] },
         { id: 'create-4', say: 'You instantly get a QR code and a six-character join code.', min: 4200, do: [
           [0, () => sfx('chime')],
@@ -303,19 +318,27 @@
       ],
     },
     {
-      id: 'join', title: 'Join from any phone', feature: 'Attendee joins with the code, picks a profile, waits in the lobby countdown', camera: 'Phone on the right, story on the left; zooms on the code boxes and countdown', sound: 'Key taps, clicks',
+      id: 'join', title: 'Join from any phone', feature: 'The home page Happening now list; attendee joins with the code, picks a profile, waits in the lobby countdown', camera: 'Phone on the right, story on the left; zooms on the Happening now list, the code boxes and the countdown', sound: 'Key taps, clicks',
       beats: [
-        { id: 'join-1', say: 'Attendees just scan the code, or type it in. There’s no app to install, and no sign-up.', do: [
-          [0, () => { reset(1); go('phone', '/', '#boxes input'); layout('phone', 1100); chapter(3, 'Step three', 'Join from any phone');
-            side('For attendees', 'Join in <span class="gradient-text">seconds</span>', [['📷', 'Scan the QR code'], ['⌨️', 'Or type the 6-character code'], ['🚫', 'No app, no sign-up'], ['🎨', 'Pick a name, avatar & colour']]); }],
+        { id: 'join-0', say: 'If you listed it, your session shows up on the home page, under Happening now, so people can find it without a code.', min: 6400, do: [
+          [0, () => { reset(1); showCursor(false); go('phone', '/', '#nowList .nowcard'); layout('phone', 1100); chapter(3, 'Step three', 'Join from any phone');
+            side('For attendees', 'Join in <span class="gradient-text">seconds</span>', [['🌍', 'Find it under Happening now'], ['📷', 'Scan the QR code'], ['⌨️', 'Or type the 6-character code'], ['🚫', 'No app, no sign-up'], ['🎨', 'Pick a name, avatar & colour']]); later(700, () => sideOn(0)); }],
+          [300, () => scrollDev('phone', '#now', 1200)],
+          [1700, () => focus('phone', '#now', { fill: 0.95, max: 1.5, dur: 1300 })],
+          [3100, () => callout('phone', '#nowList .nowcard:nth-child(2)', 'Your session', { side: 'left', hold: 2600 })],
+          [3700, () => board('Happening now', 'Listed sessions on the home page: live first, with the crowd mood, then what’s coming up')],
+          [5300, () => { reset(900); scrollDev('phone', null, 900); }],
+        ] },
+        { id: 'join-1', say: 'Or they just scan the QR code, or type it in. There’s no app to install, and no sign-up.', do: [
+          [0, () => sideOn(1)],
           [900, () => { el('phone', '#join').scrollIntoView({ block: 'center' }); }],
           [1200, () => focus('phone', '#join', { fill: 0.95, max: 2.0, dur: 1300 })],
-          [2200, () => { sideOn(1); click('phone', '#boxes input:nth-child(1)', { then: () => [...CODE()].forEach((c, i) => later(i * 170, () => { const inp = el('phone', `#boxes input:nth-child(${i + 1})`); inp.value = c; inp.dispatchEvent(new (win('phone').Event)('input', { bubbles: true })); sfx('key', 0.7); })) }); }],
+          [2200, () => { sideOn(2); click('phone', '#boxes input:nth-child(1)', { then: () => [...CODE()].forEach((c, i) => later(i * 170, () => { const inp = el('phone', `#boxes input:nth-child(${i + 1})`); inp.value = c; inp.dispatchEvent(new (win('phone').Event)('input', { bubbles: true })); sfx('key', 0.7); })) }); }],
           [3300, () => board('Typing the code', 'The six code boxes fill in, then the page joins automatically')],
           [4300, () => { reset(900); arrive('phone', d => d.location.pathname.startsWith('/e/') && d.querySelector('#mainCol .lobby')); }],
         ] },
         { id: 'join-2', say: 'They choose a name, an avatar and a colour, then wait in the lobby, where a countdown ticks down to the start.', do: [
-          [0, () => { sideOn(3); focus('phone', '.modal', { fill: 0.92, max: 1.5 }); }],
+          [0, () => { sideOn(4); focus('phone', '.modal', { fill: 0.92, max: 1.5 }); }],
           [500, () => click('phone', '#pfName', { then: () => type('phone', '#pfName', 'Jordan', { cps: 12 }) })],
           [1700, () => click('phone', '.avatar-grid button:nth-child(1)')],
           [2600, () => click('phone', '[data-c="#ff6b9d"]')],
@@ -342,11 +365,11 @@
       ],
     },
     {
-      id: 'rate', title: 'Rate your way', feature: 'All eight rating styles, each mapped to the same 0–100 score', camera: 'Phone close-up; the list on the left lights up for each style', sound: 'Clicks and taps',
+      id: 'rate', title: 'Rate your way', feature: 'All nine rating styles, including tilting the phone, each mapped to the same 0–100 score', camera: 'Phone close-up; the list on the left lights up for each style', sound: 'Clicks and taps',
       beats: [
         { id: 'rate-1', say: 'Rating takes a second. The slider is the default: drag it, and the face changes with you.', do: [
           [0, () => { reset(1); layout('phone', 1000); chapter(5, 'Step five', 'Rate your way');
-            side('For attendees', '8 ways to <span class="gradient-text">rate</span>', MODES, 'grid8'); later(1200, () => sideOn(0)); }],
+            side('For attendees', '9 ways to <span class="gradient-text">rate</span>', MODES, 'grid9'); later(1200, () => sideOn(0)); }],
           [1300, () => focus('phone', '#rater', { fill: 0.7, max: 1.7 })],
           [2200, () => { const inp = el('phone', '#rater input'); const r = inp.getBoundingClientRect(); const w = win('phone');
             drag('phone', inp, t => [r.left + r.width * (0.5 + 0.38 * Math.sin(t * Math.PI * 1.5) * (t < 0.66 ? 1 : 1)), r.top + r.height / 2], 2600,
@@ -373,6 +396,19 @@
           [800, () => click('phone', '.rt-thumbs .up', { move: 400 })], [1250, () => click('phone', '.rt-thumbs .up', { move: 120 })], [1600, () => click('phone', '.rt-thumbs .up', { move: 120 })],
         ] },
         { id: 'rate-8', say: 'Or a ring of vibes.', min: 2200, do: [[0, rateMode('emoji', 7)], [900, () => click('phone', '.rt-orbit button[data-v="100"]', { move: 450 })], [1700, () => board('Vibes', 'The orbit of vibes, with fire selected')]] },
+        { id: 'rate-tilt', say: 'Or just tilt your phone, like a spirit level, and tap Hold when it feels right.', min: 5800, do: [
+          [0, rateMode('tilt', 8)],
+          [700, () => { win('phone').DeviceOrientationEvent.requestPermission = async () => 'granted'; click('phone', '.rt-tilt-go', { move: 450 }); }],
+          [1500, () => { showCursor(false); focus('phone', '#rater', { fill: 0.7, max: 1.7, dur: 900 });
+            const w = win('phone');
+            tween('tilt', 0, 1, 2800, t => {
+              const deg = 30 * Math.sin(t * Math.PI * 2.5) * Math.min(1, t * 4);
+              DEV.phone.rot = deg * 0.4; paintDev(DEV.phone);
+              w.dispatchEvent(new w.DeviceOrientationEvent('deviceorientation', { alpha: 0, beta: 55, gamma: deg }));
+            }, 'lin'); }],
+          [3300, () => board('Tilt to rate', 'Tilting the phone moves the bubble; right is happier')],
+          [4500, () => { el('phone', '.rt-tilt-go')?.click(); sfx('click'); tween('untilt', DEV.phone.rot || 0, 0, 700, v => { DEV.phone.rot = v; paintDev(DEV.phone); }, 'io'); }],
+        ] },
         { id: 'rate-9', say: 'Whatever the style, it all becomes one score, from zero to a hundred.', do: [
           [0, () => { showCursor(false); sideOn(-1); reset(1500); }],
           [800, () => document.querySelectorAll('#side .item').forEach((it, i) => later(i * 90, () => it.classList.add('on')))],

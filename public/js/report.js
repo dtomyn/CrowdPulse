@@ -322,7 +322,7 @@ ${P ? `
   });
 
   // modes
-  const MODE_LABEL = Object.fromEntries(['slider:🎚️ Slider', 'smiley:😊 Smileys', 'stars:⭐ Stars', 'dial:🎛️ Dial', 'weather:🌤️ Weather', 'thermo:🌡️ Thermo', 'thumbs:👍 Thumbs', 'emoji:🔮 Vibes'].map(s => s.split(':')));
+  const MODE_LABEL = Object.fromEntries(['slider:🎚️ Slider', 'smiley:😊 Smileys', 'stars:⭐ Stars', 'dial:🎛️ Dial', 'weather:🌤️ Weather', 'thermo:🌡️ Thermo', 'thumbs:👍 Thumbs', 'emoji:🔮 Vibes', 'tilt:📱 Tilt'].map(s => s.split(':')));
   const modes = Object.entries(R.modePeople);
   lazy('cModes', {
     type: 'doughnut',

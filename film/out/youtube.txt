@@ -1,26 +1,27 @@
 TITLE
-Know How Your Talk Is Landing, Live – CrowdPulse Walkthrough (Live Ratings + Passive Attention Signals)
+Know How Your Talk Is Landing, Live | Rate From Any Phone, Even by Tilting It | CrowdPulse
 
 ALTERNATIVE TITLES
-Feel the Room, Live: Real-Time Audience Ratings and Attention for Talks & Workshops | CrowdPulse
 What Your Audience Says vs. What They Show: Live Feedback for Presenters (Full Walkthrough)
+From One Smiley to Nine Ways to Rate: CrowdPulse Live Audience Feedback Walkthrough
 
 DESCRIPTION
 Your audience rates your talk five stars. But were they actually paying attention?
 
-CrowdPulse shows you both, live. Attendees rate your session from their phones while it happens, and passive signals show what the room is doing without anyone pressing a button. When the lights come up, you get a report that lines up what people said with what they showed.
+CrowdPulse shows you both, live. Attendees rate your session from their phones as it happens, passive signals show what the room is actually doing, and when the lights come up you get a report that lines up what people said with what they showed.
 
 This 4-minute walkthrough covers everything, from creating a session to the final report.
 
 What you'll see:
 • Create a session in seconds: in person, virtual or hybrid, with a QR code and a 6-character join code
+• NEW: "Happening now" — list your session on the home page so people can find it without a code
 • Attendees join from any phone, with no app and no sign-up
-• 8 ways to rate: slider, smileys, stars, a rotary dial, weather, a thermometer, thumbs and vibes
+• 9 ways to rate: slider, smileys, stars, dial, weather, thermometer, thumbs, vibes and NEW tilt — rate by tilting your phone like a spirit level
 • Emoji reaction storms that float across every screen, including the projector
 • Live chat, Q&A with upvotes, instant polls, and spotlighting a question on every screen
 • A control room with a live mood gauge, chapter markers and a coach that nudges you when the mood shifts
-• NEW: passive signals. Tab focus, opt-in attendee cameras and a room sensor combine into one attention index
-• NEW: "said vs. shown". When ratings stay high but attention drops, the coach flags it: polite, but distracted
+• Passive signals: tab focus, opt-in attendee cameras and a room sensor combine into one attention index
+• "Said vs. shown": when ratings stay high but attention drops, the coach flags it — polite, but distracted
 • A post-session report with a grade, mood timeline, key moments, rating vs. attention, laughter and applause peaks, word cloud, NPS, and PDF, CSV and JSON export
 
 Privacy by design: camera analysis runs on each attendee's own device and is strictly opt-in. Only three numbers are sent (attention, positive, fatigue). No video, images or audio ever leave the device, and crowd figures only appear once at least 5 people contribute.
@@ -28,22 +29,26 @@ Privacy by design: camera analysis runs on each attendee's own device and is str
 Chapters
 0:00 Intro
 0:12 Create a session
-0:35 Invite the room
-0:42 Join from any phone
-0:55 Go live
-1:03 Rate your way: 8 rating styles
-1:33 Reaction storms
-1:39 Chat, Q&A and polls
-1:56 Read the room: the control room and coach
-2:16 Passive signals: attention and said vs. shown
-2:54 On the big screen
-3:02 Wrap up and feedback
-3:11 The report
-3:53 Get started
+0:37 Invite the room
+0:45 Join from any phone
+1:05 Go live
+1:13 Rate your way: 9 rating styles
+1:48 Reaction storms
+1:54 Chat, Q&A and polls
+2:12 Read the room: the control room and coach
+2:32 Passive signals: attention and said vs. shown
+3:10 On the big screen
+3:17 Wrap up and feedback
+3:27 The report
+4:09 Get started
 
 Get started: run npm start, then open localhost:3000/admin. Attendees on the same Wi-Fi join by scanning the QR code.
 
+The backstory: in 2015 I was on a team that built a "Social Evaluation" rating system: rate a speaker live from your phone, even with a "use gyroscope" checkbox. The source code is long gone, but the slides survived. CrowdPulse is that idea rebuilt from scratch, and tilt-to-rate is back.
+
 Everything in this video is the real application, recorded frame by frame. The audience is simulated, and the narration uses a synthetic voice (Kokoro text-to-speech).
 
+#PublicSpeaking #AudienceEngagement #LiveFeedback
+
 TAGS
-audience feedback, audience attention, engagement analytics, live polling, audience engagement, presentation tips, public speaking, real-time feedback, live Q&A, QR code, event app, workshop tools, hybrid events, virtual events, net promoter score, sentiment analysis, Node.js, Socket.IO
+audience feedback, live audience rating, audience attention, engagement analytics, live polling, live Q&A, real-time feedback, presentation tips, public speaking, speaker feedback, workshop tools, hybrid events, virtual events, QR code, tilt to rate, net promoter score, Node.js, Socket.IO

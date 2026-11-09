@@ -56,11 +56,12 @@ Data is stored in `data/db.json`.
 - Create sessions with a title, description, presenter, date/time, duration and accent colour
 - Location: **In person** (venue + address), **Virtual** (meeting link) or **Hybrid** (both)
 - Each session gets a 6-character join code (no confusable 0/O/1/I) and a QR code
-- Feature toggles: chat, Q&A, reactions, show the crowd mood to attendees, share the report with attendees
+- Feature toggles: chat, Q&A, reactions, show the crowd mood to attendees, share the report with attendees, list on the home page
+- **Happening now**: sessions the host chooses to list (off by default) appear on the home page, live ones first, then those starting in the next 7 days, so people can join without a code. The list shows the title, presenter, venue, how many are in the room and, if the host shares it with attendees, the crowd mood
 - Duplicate or delete sessions
 
 **Attendees** (mobile-first)
-- 8 rating styles, all mapped to 0–100: 🎚️ Slider (default), 😊 Smileys, ⭐ Stars, 🎛️ Rotary dial, 🌤️ Weather, 🌡️ Thermometer, 👍 Thumbs (tap to nudge), 🔮 Vibes orbit
+- 9 rating styles, all mapped to 0–100: 🎚️ Slider (default), 😊 Smileys, ⭐ Stars, 🎛️ Rotary dial, 🌤️ Weather, 🌡️ Thermometer, 👍 Thumbs (tap to nudge), 🔮 Vibes orbit, 📱 Tilt (tap Start, tilt the phone left or right, tap Hold to keep the rating; iPhones ask for motion access, which needs https; devices without a motion sensor drag the bubble instead)
 - Emoji reaction storms that float across every screen
 - Live chat with typing indicators, pinned messages and host badges
 - Q&A with upvotes, polls with animated results

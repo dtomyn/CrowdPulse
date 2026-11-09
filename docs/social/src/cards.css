@@ -1,0 +1,40 @@
+/* Shared look for the social image cards. Loads on top of the app's own style.css (fonts, colours). */
+html, body { margin: 0; background: #07051a; overflow: hidden; }
+body { color: var(--text); font-family: Inter, system-ui, sans-serif; }
+.card-canvas {
+  position: relative; overflow: hidden; box-sizing: border-box;
+  background:
+    radial-gradient(900px 700px at 12% 8%, rgba(124, 92, 255, .38), transparent 60%),
+    radial-gradient(800px 600px at 92% 95%, rgba(255, 92, 168, .26), transparent 60%),
+    radial-gradient(700px 500px at 85% 10%, rgba(46, 230, 214, .14), transparent 60%),
+    #07051a;
+}
+.stars { position: absolute; inset: 0; background-image:
+  radial-gradient(1.5px 1.5px at 10% 20%, #fff8, transparent), radial-gradient(1px 1px at 30% 70%, #fff6, transparent),
+  radial-gradient(1.5px 1.5px at 55% 15%, #fff7, transparent), radial-gradient(1px 1px at 75% 45%, #fff5, transparent),
+  radial-gradient(1.5px 1.5px at 90% 80%, #fff6, transparent), radial-gradient(1px 1px at 45% 92%, #fff5, transparent),
+  radial-gradient(1px 1px at 20% 50%, #fff4, transparent), radial-gradient(1.5px 1.5px at 65% 60%, #fff5, transparent); }
+.eyebrow-x { font-family: var(--display); letter-spacing: .22em; text-transform: uppercase; font-weight: 700; color: #b9adff; }
+.grad { background: linear-gradient(90deg, #a58bff, #ff5ca8 55%, #ffb547); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.brandrow { display: flex; align-items: center; gap: 14px; font-family: var(--display); font-weight: 700; }
+.logo { width: 48px; height: 48px; border-radius: 14px; background: linear-gradient(90deg, #7c5cff, #ff5ca8 55%, #ffb547); display: grid; place-items: center; box-shadow: 0 10px 40px -8px rgba(255, 92, 168, .6); }
+.logo svg { width: 30px; height: 30px; }
+.chip { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 999px; font-weight: 700; font-size: 20px; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.06); }
+
+/* "2015" retro frame: a light Bootstrap-era browser window */
+.oldwin { background: #fff; border-radius: 14px; overflow: hidden; box-shadow: 0 30px 80px -20px rgba(0,0,0,.7); border: 1px solid #cfd6e4; }
+.oldwin .bar { height: 34px; background: linear-gradient(#f1f3f7, #dde2ea); display: flex; align-items: center; gap: 7px; padding: 0 12px; border-bottom: 1px solid #c4cad6; }
+.oldwin .bar i { width: 11px; height: 11px; border-radius: 50%; background: #c9ced8; display: block; }
+.oldwin .bar span { margin-left: 10px; flex: 1; height: 20px; border-radius: 4px; background: #fff; border: 1px solid #c9ced8; font: 12px/20px Arial, sans-serif; color: #667; padding-left: 8px; }
+.oldwin img { display: block; width: 100%; }
+.newwin { border-radius: 18px; overflow: hidden; border: 1px solid rgba(255,255,255,.18); box-shadow: 0 40px 120px -30px rgba(124, 92, 255, .8); }
+.newwin img { display: block; width: 100%; }
+.sticker { position: absolute; font-family: var(--display); font-weight: 700; border-radius: 14px; padding: 10px 18px; transform: rotate(-6deg); box-shadow: 0 12px 30px -8px rgba(0,0,0,.6); }
+
+/* rater tiles */
+.tile { border-radius: 26px; background: rgba(20, 14, 52, .78); border: 1px solid rgba(255,255,255,.12); padding: 16px 18px 14px; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+.tile h4 { margin: 0 0 4px; font-family: var(--display); font-size: 22px; display: flex; gap: 10px; align-items: center; }
+.tile h4 small { font: 600 13px Inter, sans-serif; color: #9a93c9; margin-left: auto; letter-spacing: .08em; text-transform: uppercase; }
+.tile .host { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.tile.new::after { content: 'NEW'; position: absolute; top: 14px; right: 16px; font: 800 12px Inter; letter-spacing: .12em; padding: 4px 9px; border-radius: 999px; background: linear-gradient(90deg, #ff5ca8, #ffb547); color: #1a0b2e; }
+.tile.new h4 small { display: none; }

@@ -165,6 +165,83 @@
     },
   };
 
+  // Tilt the phone left/right to rate (the 2015 app's "Use Gyroscope"). Tilting only changes the rating after the
+  // attendee taps Start, and Hold freezes it, so a phone put down on the table doesn't keep re-rating.
+  // Devices without motion sensors (laptops) fall back to dragging the bubble.
+  const TILT_RANGE = 35; // degrees either side of level for 0 and 100
+  const tiltState = { active: false, granted: false }; // survives re-mounts (the page re-renders on every event update)
+  R.tilt = {
+    label: 'Tilt', icon: '📱',
+    mount(host, v, on) {
+      host.innerHTML = `<div class="rt-tilt">
+        <div class="rt-big"><span class="rt-face">🙂</span><span class="rt-num">50</span></div>
+        <div class="rt-level"><div class="rt-level-mid"></div><div class="rt-bubble"></div></div>
+        <div class="rt-ends"><span>⬅️ 😫 Not for me</span><span>Loving it 🤩 ➡️</span></div>
+        <div class="rt-tilt-ctl"><button type="button" class="btn primary rt-tilt-go">📱 Start tilting</button></div></div>
+        <div class="rt-caption">Tap Start, then tilt your phone left or right</div>`;
+      const root = host.firstElementChild, bubble = host.querySelector('.rt-bubble'), level = host.querySelector('.rt-level');
+      const num = host.querySelector('.rt-num'), face = host.querySelector('.rt-face'), go = host.querySelector('.rt-tilt-go'), cap = host.querySelector('.rt-caption');
+      let cur = v ?? 50, smooth = null, lastB = -1, sawMotion = false, waitT = null;
+      const paint = x => {
+        bubble.style.left = `calc(24px + (100% - 48px) * ${x / 100})`; // keeps the whole bubble inside the tube
+        num.textContent = Math.round(x); num.style.color = CP.moodColor(x);
+        bubble.style.background = CP.moodColor(x); bubble.style.boxShadow = `0 0 26px ${CP.moodColor(x)}`;
+        const e = CP.mood(x).emoji; if (face.textContent !== e) { face.textContent = e; face.classList.remove('pop'); void face.offsetWidth; face.classList.add('pop'); }
+        const b = Math.floor(x / 10); if (b !== lastB) { lastB = b; if (tiltState.active) vibrate(); }
+      };
+      const commit = x => { x = Math.round(Math.max(0, Math.min(100, x))); if (x === Math.round(cur)) return; cur = x; paint(cur); on(cur); };
+
+      // left/right tilt in the screen's frame, whichever way the phone is turned
+      const sideTilt = e => {
+        const a = (screen.orientation?.angle ?? window.orientation ?? 0) % 360;
+        if (a === 90) return e.beta; if (a === 270 || a === -90) return -e.beta; if (a === 180) return -e.gamma;
+        return e.gamma;
+      };
+      function onTilt(e) {
+        if (!root.isConnected) return stopListening(); // widget was replaced: clean up
+        if (e.gamma == null || e.beta == null) return;
+        sawMotion = true;
+        const deg = sideTilt(e);
+        smooth = smooth == null ? deg : smooth + (deg - smooth) * 0.25; // low-pass: steadies a shaky hand
+        commit(50 + (Math.max(-TILT_RANGE, Math.min(TILT_RANGE, smooth)) / TILT_RANGE) * 50);
+      }
+      function stopListening() { window.removeEventListener('deviceorientation', onTilt); clearTimeout(waitT); }
+      const ui = () => {
+        root.classList.toggle('on', tiltState.active);
+        go.textContent = tiltState.active ? '✋ Hold this rating' : '📱 Start tilting';
+        go.classList.toggle('primary', !tiltState.active);
+        cap.textContent = tiltState.active ? 'Tilt left or right · tap Hold to keep your rating' : 'Tap Start, then tilt your phone left or right';
+      };
+      function noSensor(msg) {
+        tiltState.active = false; stopListening(); ui();
+        go.disabled = true; go.textContent = '📵 No tilt sensor'; cap.textContent = msg;
+      }
+      async function start() {
+        if (typeof DeviceOrientationEvent === 'undefined') return noSensor('This device has no motion sensor. Drag the bubble instead.');
+        if (!tiltState.granted && typeof DeviceOrientationEvent.requestPermission === 'function') { // iOS asks first
+          try { if (await DeviceOrientationEvent.requestPermission() !== 'granted') return noSensor('Motion access was declined. Drag the bubble instead, or allow Motion & Orientation for this site.'); }
+          catch { return noSensor("Motion access isn't available here (iPhones need an https link). Drag the bubble instead."); }
+        }
+        tiltState.granted = true; tiltState.active = true; smooth = null; ui();
+        window.addEventListener('deviceorientation', onTilt);
+        clearTimeout(waitT);
+        waitT = setTimeout(() => { if (!sawMotion && root.isConnected) noSensor("No tilt readings from this device. Drag the bubble instead."); }, 1500);
+      }
+      go.onclick = () => { if (tiltState.active) { tiltState.active = false; stopListening(); ui(); vibrate(); } else start(); };
+
+      // drag fallback (and a quick way to nudge while holding)
+      let drag = false;
+      const fromE = e => { const r = level.getBoundingClientRect(); return ((e.clientX - r.left) / r.width) * 100; };
+      level.addEventListener('pointerdown', e => { if (tiltState.active) return; drag = true; level.setPointerCapture(e.pointerId); commit(fromE(e)); });
+      level.addEventListener('pointermove', e => { if (drag) commit(fromE(e)); });
+      level.addEventListener('pointerup', () => (drag = false));
+
+      paint(cur); ui();
+      if (tiltState.active) start(); // resume after a re-render
+      return { set: x => { cur = x ?? 50; paint(cur); } };
+    },
+  };
+
   // little particle burst out of an element
   function burst(el, emoji, n = 6) {
     const r = el.getBoundingClientRect();

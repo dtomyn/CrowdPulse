@@ -52,7 +52,7 @@ $('#create').addEventListener('submit', async e => {
     title: f.get('title'), description: f.get('description'), presenter: f.get('presenter'),
     startsAt: new Date(f.get('startsAt')).toISOString(), durationMin: Number(f.get('durationMin')), accent,
     location: { mode: locMode, venue: f.get('venue'), address: f.get('address'), url: f.get('url') },
-    settings: Object.fromEntries(['chat', 'qa', 'reactions', 'showCrowdMood', 'publicReport', 'passiveTab', 'passiveCamera', 'passiveRoom'].map(k => [k, f.get(k) === 'on'])),
+    settings: Object.fromEntries(['chat', 'qa', 'reactions', 'showCrowdMood', 'publicReport', 'listed', 'passiveTab', 'passiveCamera', 'passiveRoom'].map(k => [k, f.get(k) === 'on'])),
   };
   try {
     const ev = await api('/api/events', { method: 'POST', body: JSON.stringify(body) });

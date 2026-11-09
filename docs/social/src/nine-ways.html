@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Nine ways to rate</title>
+<link rel="stylesheet" href="http://localhost:3055/css/style.css">
+<link rel="stylesheet" href="http://localhost:3055/css/raters.css">
+<link rel="stylesheet" href="cards.css">
+<style>
+  .card-canvas { width: 1080px; height: 1080px; padding: 38px 46px 34px; display: flex; flex-direction: column; }
+  header { display: flex; align-items: flex-end; gap: 20px; margin-bottom: 20px; position: relative; }
+  header h1 { font-size: 54px; line-height: 1.02; }
+  header p { margin: 10px 0 0; font-size: 21px; color: #c7c0ef; }
+  .grid9 { flex: 1; display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); gap: 14px; position: relative; min-height: 0; }
+  .fit { transform-origin: top center; }
+  /* squeeze the phone-sized widgets into tiles */
+  .s80 { zoom: .8; } .s70 { zoom: .7; } .s62 { zoom: .62; } .s55 { zoom: .55; }
+  .tile .rt-caption { display: none; }
+  .tile .rt-fill { background-size: 430px 100%; }
+  .tile { min-height: 0; }
+  footer { margin-top: 18px; flex: none; display: flex; align-items: center; justify-content: space-between; font-size: 19px; color: #b6aee6; position: relative; }
+</style></head>
+<body>
+<div class="card-canvas">
+  <div class="stars"></div>
+  <header>
+    <div>
+      <div class="eyebrow-x" style="font-size:17px">2015: one slider and a smiley · 2026:</div>
+      <h1 style="margin-top:10px">Nine ways to tell the room<br><span class="grad">how you really feel.</span></h1>
+    </div>
+  </header>
+  <div class="grid9">
+    <div class="tile"><h4>🎚️ Slider <small>the classic</small></h4><div class="host s70" data-rater="slider" data-v="78"></div></div>
+    <div class="tile"><h4>😊 Smileys <small>since 2015</small></h4><div class="host s62" data-rater="smiley" data-v="75"></div></div>
+    <div class="tile"><h4>⭐ Stars</h4><div class="host s80" data-rater="stars" data-v="100"></div></div>
+    <div class="tile"><h4>🎛️ Rotary dial</h4><div class="host s55" data-rater="dial" data-v="64"></div></div>
+    <div class="tile"><h4>🌤️ Weather</h4><div class="host s55" data-rater="weather" data-v="75"></div></div>
+    <div class="tile"><h4>🌡️ Thermometer</h4><div class="host s55" data-rater="thermo" data-v="88"></div></div>
+    <div class="tile"><h4>👍 Thumbs</h4><div class="host s62" data-rater="thumbs" data-v="70"></div></div>
+    <div class="tile"><h4>🔮 Vibes</h4><div class="host s55" data-rater="emoji" data-v="100"></div></div>
+    <div class="tile new"><h4>📱 Tilt</h4><div class="host s62" data-rater="tilt" data-v="82"></div></div>
+  </div>
+  <footer>
+    <div class="brandrow" style="font-size:26px;color:#fff"><span class="logo"></span>CrowdPulse</div>
+    <div>📱 Tilt is the 2015 “Use Gyroscope” checkbox, all grown up</div>
+  </footer>
+</div>
+<script src="http://localhost:3055/js/common.js"></script>
+<script src="http://localhost:3055/js/raters.js"></script>
+<script src="cards.js"></script>
+</body></html>

@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<title>Then and now</title>
+<link rel="stylesheet" href="http://localhost:3055/css/style.css">
+<link rel="stylesheet" href="cards.css">
+<style>
+  /* ---------- square (default) ---------- */
+  .card-canvas { width: 1080px; height: 1080px; padding: 48px 54px 40px; }
+  .head, .vs, .foot, .old, .phone { position: absolute; }
+  .head { left: 54px; top: 46px; right: 54px; }
+  h1 { font-size: 60px; line-height: 1.02; margin-top: 12px; }
+  .old { left: 40px; top: 262px; width: 560px; transform: rotate(-3deg); }
+  .phone { right: 70px; top: 232px; width: 312px; transform: rotate(3deg); }
+  .vs { left: 54px; top: 660px; width: 590px; }
+  .foot { left: 54px; right: 54px; bottom: 40px; display: flex; align-items: center; justify-content: space-between; }
+
+  /* ---------- 16:9 ---------- */
+  .wide .card-canvas { width: 1920px; height: 1080px; }
+  .wide .head { left: 90px; top: 80px; width: 760px; right: auto; }
+  .wide h1 { font-size: 84px; }
+  .wide .vs { left: 90px; top: 500px; width: 740px; }
+  .wide .old { left: 850px; top: 170px; width: 620px; }
+  .wide .phone { right: 100px; top: 84px; width: 372px; }
+  .wide .foot { left: 90px; right: auto; bottom: 64px; width: 1740px; }
+
+  /* phone frame showing the top of the real attendee page */
+  .phone .body { border-radius: 52px; padding: 13px; background: linear-gradient(160deg, #3a335f, #120e2a); box-shadow: 0 50px 120px -30px rgba(124, 92, 255, .85), inset 0 0 0 2px rgba(255,255,255,.12); }
+  .phone .screen { border-radius: 40px; overflow: hidden; aspect-ratio: 430 / 1010; background: #07051a; position: relative; }
+  .phone .screen img { width: 100%; display: block; }
+  .phone .screen::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 90px; background: linear-gradient(transparent, rgba(7,5,26,.85)); }
+
+  .yr { position: absolute; font-family: var(--display); font-weight: 700; font-size: 28px; padding: 7px 16px; border-radius: 14px; box-shadow: 0 12px 30px -8px rgba(0,0,0,.6); z-index: 3; }
+  .y15 { background: #ffe14d; color: #3a2c00; left: -16px; top: -26px; transform: rotate(-7deg); }
+  .y26 { background: linear-gradient(90deg, #7c5cff, #ff5ca8); color: #fff; right: -26px; top: -24px; transform: rotate(4deg); white-space: nowrap; }
+
+  /* then → now list */
+  .vs h3 { font-family: var(--display); font-size: 22px; margin: 0 0 10px; color: #fff; display: flex; gap: 10px; align-items: center; }
+  .row { display: grid; grid-template-columns: 1fr 26px 1.25fr; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px solid rgba(255,255,255,.08); font-size: 17px; line-height: 1.25; }
+  br.w { display: none; } .wide br.w { display: inline; }
+  .row .t { color: #a49cc9; }
+  .row .a { color: #ff8cc6; text-align: center; font-weight: 700; }
+  .row .n { color: #fff; font-weight: 600; }
+  .wide .vs h3 { font-size: 28px; margin-bottom: 14px; }
+  .wide .row { font-size: 22px; padding: 10px 0; grid-template-columns: .9fr 30px 1.4fr; }
+
+  .more { font-family: var(--display); font-weight: 700; font-size: 28px; }
+  .wide .more { font-size: 36px; }
+</style></head>
+<body>
+<div class="card-canvas">
+  <div class="stars"></div>
+
+  <div class="head">
+    <div class="eyebrow-x" style="font-size:17px">PDC Hackathon 2015 → 2026</div>
+    <h1>11 years later,<br class="w"> the room<br class="s"> <span class="grad">still has opinions.</span></h1>
+  </div>
+
+  <div class="old">
+    <div class="oldwin"><div class="bar"><i></i><i></i><i></i><span>ratingsystem.azurewebsites.net</span></div><img src="assets/2015-rate.png" alt=""></div>
+    <span class="yr y15">2015</span>
+  </div>
+
+  <div class="phone">
+    <div class="body"><div class="screen"><img src="assets/2026-phone.png" alt=""></div></div>
+    <span class="yr y26">2026 · CrowdPulse</span>
+  </div>
+
+  <div class="vs">
+    <h3>The rating screen, then <span class="grad">→ now</span></h3>
+    <div class="row"><span class="t">One smiley + a slider</span><span class="a">→</span><span class="n">🎚️ 9 rating styles to pick from</span></div>
+    <div class="row"><span class="t">“Use Gyroscope” checkbox</span><span class="a">→</span><span class="n">📱 Tilt to rate, with a Hold button</span></div>
+    <div class="row"><span class="t">Submit button</span><span class="a">→</span><span class="n">⚡ Updates live as you move</span></div>
+    <div class="row"><span class="t">Message box</span><span class="a">→</span><span class="n">💬 Chat · Q&amp;A · polls · 🎆 reactions</span></div>
+    <div class="row"><span class="t">Graph button</span><span class="a">→</span><span class="n">📊 Live mood: you vs. the room</span></div>
+  </div>
+
+  <div class="foot">
+    <div class="more">More ideas. More flair. <span class="grad">More ways to rate.</span></div>
+    <div class="brandrow" style="font-size:24px"><span class="logo"></span>CrowdPulse<span style="color:#9a93c9;font-weight:500;font-size:19px;margin-left:4px">· rebuilt with Claude</span></div>
+  </div>
+</div>
+<script src="cards.js"></script>
+</body></html>

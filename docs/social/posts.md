@@ -40,7 +40,7 @@ How would *you* rate this post? (A slider is fine. A thermometer is better.)
 
 **First comment** (LinkedIn shows posts with links in the body to fewer people, so put the links in a comment):
 > 🎬 2-minute walkthrough: https://youtu.be/JNMJ8OB89lg
-> 💻 Code (open source, runs on your laptop): https://github.com/dtomyn/LocalCrowdRating
+> 💻 Code (open source, runs on your laptop): https://github.com/dtomyn/CrowdPulse
 
 ---
 
@@ -85,7 +85,7 @@ So I made it my test project and built a first version with Claude. Then my good
 It runs on a laptop and attendees join from their phones on the Wi-Fi, which makes it perfect for lunch-and-learns, demos and town halls.
 
 🎬 Walkthrough video: https://youtu.be/JNMJ8OB89lg
-💻 Code: https://github.com/dtomyn/LocalCrowdRating
+💻 Code: https://github.com/dtomyn/CrowdPulse
 
 Huge thanks to Claude for the pair programming, to Tom for the deck and the v2 ideas, and to Joe and Tom for the original spark. ⚡
 

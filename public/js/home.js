@@ -27,9 +27,10 @@ $('#join').addEventListener('submit', async e => {
   e.preventDefault();
   const code = ins.map(x => x.value).join('');
   if (code.length < 6) { $('#join').classList.add('shake'); setTimeout(() => $('#join').classList.remove('shake'), 500); return; }
-  const r = await fetch('/api/events/' + code + '/public');
-  if (!r.ok) { CP.toast('🤔 No session found with code ' + code); $('#join').classList.add('shake'); setTimeout(() => $('#join').classList.remove('shake'), 500); return; }
-  location.href = '/e/' + code;
+  let ev = null;
+  try { ev = await CP.rpc('cp_event_public', { _c: code }); } catch (err) { CP.toast('📡 ' + err.message); return; }
+  if (!ev) { CP.toast('🤔 No session found with code ' + code); $('#join').classList.add('shake'); setTimeout(() => $('#join').classList.remove('shake'), 500); return; }
+  location.href = CP.joinUrl(code);
 });
 
 // hero demo animation
@@ -52,7 +53,7 @@ const nowList = $('#nowList');
 const ago = t => { const m = Math.max(0, Math.round((Date.now() - new Date(t)) / 60000)); return m < 1 ? 'just started' : m < 60 ? `${m} min in` : `${Math.floor(m / 60)}h ${m % 60}m in`; };
 async function loadNow() {
   let list;
-  try { const r = await fetch('/api/live', { cache: 'no-store' }); if (!r.ok) return; list = await r.json(); } catch { return; }
+  try { list = await CP.rpc('cp_list_live'); } catch { return; }
   $('#nowEmpty').classList.toggle('hidden', list.length > 0);
   const live = list.filter(e => e.status === 'live').length;
   $('#nowCount').textContent = list.length ? `${live} live · ${list.length - live} coming up` : '';
@@ -66,7 +67,7 @@ async function loadNow() {
       <h3>${CP.esc(e.title)}</h3>
       ${meta ? `<div class="meta">${meta}</div>` : ''}
       <div class="meta">${when}</div>
-      <a class="btn ${e.status === 'live' ? 'primary' : ''} sm" href="/e/${encodeURIComponent(e.code)}">${e.status === 'live' ? 'Join →' : 'Wait in the lobby →'}</a>
+      <a class="btn ${e.status === 'live' ? 'primary' : ''} sm" href="${CP.esc(CP.joinUrl(e.code))}">${e.status === 'live' ? 'Join →' : 'Wait in the lobby →'}</a>
     </article>`;
   }).join('');
 }

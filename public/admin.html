@@ -1,11 +1,14 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-auth="callback">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Host Dashboard · CrowdPulse</title>
 <meta name="theme-color" content="#07051a">
-<link rel="stylesheet" href="/css/style.css">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://127.0.0.1:54321 ws://127.0.0.1:54321; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
 <style>
   .layout { display: grid; grid-template-columns: 430px 1fr; gap: 22px; align-items: start; }
   .events { display: grid; gap: 14px; }
@@ -35,14 +38,20 @@
 </style>
 </head>
 <body>
-<header class="topbar"><span id="brand"></span><span class="pill">HOST</span><span class="spacer"></span><a class="btn sm ghost" href="/">Join as attendee</a></header>
+<header class="topbar"><span id="brand"></span><span class="pill">HOST</span><span class="spacer"></span><span id="who" class="muted" style="font-size:.85rem"></span><a class="btn sm ghost" href="./">Join as attendee</a></header>
 <main class="wrap">
   <div style="margin:10px 0 26px">
     <div class="eyebrow">Host dashboard</div>
     <h1 style="font-size:clamp(1.8rem,4vw,2.8rem)">Create a session people <span class="gradient-text">feel</span>.</h1>
   </div>
+  <section id="signin" class="card glow hidden" style="max-width:560px;margin-bottom:22px">
+    <div class="card-title"><h3>🔑 Sign in to host</h3></div>
+    <p class="muted" style="margin:6px 0 14px;font-size:.92rem">Hosts sign in with their email address. We send a sign-in link, so there's no password to remember. Only addresses on this site's host list can create sessions.</p>
+    <form id="signinForm" class="row wrap-row" style="gap:8px"><input class="input" type="email" name="email" required autocomplete="email" placeholder="you@example.com" style="flex:1;min-width:200px"><button class="btn primary">Email me a link</button></form>
+    <div id="signinNote" class="dim" style="font-size:.82rem;margin-top:10px"></div>
+  </section>
   <div class="layout">
-    <form id="create" class="card glow form-grid">
+    <form id="create" class="card glow form-grid hidden">
       <div class="card-title"><h3>✨ New session</h3></div>
       <label class="field">Title<input class="input" name="title" required maxlength="120" placeholder="e.g. The Future of Design Systems"></label>
       <label class="field">Description<textarea class="input" name="description" maxlength="2000" placeholder="What will attendees get out of this?"></textarea></label>
@@ -91,7 +100,11 @@
     </section>
   </div>
 </main>
-<script src="/js/common.js"></script>
-<script src="/js/admin.js"></script>
+<script src="vendor/supabase/supabase.js"></script>
+<script src="vendor/qrcode/qrcode.js"></script>
+<script src="js/config.js"></script>
+<script src="js/common.js"></script>
+<script src="js/supa.js"></script>
+<script src="js/admin.js"></script>
 </body>
 </html>

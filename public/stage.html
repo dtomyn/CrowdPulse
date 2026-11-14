@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Stage · CrowdPulse</title>
 <meta name="theme-color" content="#07051a">
-<link rel="stylesheet" href="/css/style.css">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://127.0.0.1:54321 ws://127.0.0.1:54321; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
 <style>
   html, body { height: 100%; overflow: hidden; }
   .stage { height: 100vh; display: grid; grid-template-columns: 1.35fr 1fr; grid-template-rows: auto 1fr auto; gap: 2vh 2vw; padding: 3vh 3vw; }
@@ -65,8 +68,11 @@
 </div>
 <div id="lobby" class="big-lobby hidden"></div>
 <button class="btn sm fs" id="fs">⛶ Fullscreen</button>
-<script src="/socket.io/socket.io.js"></script>
-<script src="/js/common.js"></script>
-<script src="/js/stage.js"></script>
+<script src="vendor/supabase/supabase.js"></script>
+<script src="vendor/qrcode/qrcode.js"></script>
+<script src="js/config.js"></script>
+<script src="js/common.js"></script>
+<script src="js/supa.js"></script>
+<script src="js/stage.js"></script>
 </body>
 </html>

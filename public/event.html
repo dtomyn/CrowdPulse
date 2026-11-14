@@ -5,9 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <title>Live Session · CrowdPulse</title>
 <meta name="theme-color" content="#07051a">
-<link rel="stylesheet" href="/css/style.css">
-<link rel="stylesheet" href="/css/raters.css">
-<link rel="stylesheet" href="/css/passive.css">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://127.0.0.1:54321 ws://127.0.0.1:54321; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/raters.css">
+<link rel="stylesheet" href="css/passive.css">
 <style>
   body { padding-bottom: env(safe-area-inset-bottom); }
   .ev-head { display: flex; gap: 14px; align-items: center; min-width: 0; }
@@ -139,10 +142,13 @@
   <button data-tab="polls"><span>📊</span>Polls<i class="dot hidden"></i></button>
 </nav>
 
-<script src="/socket.io/socket.io.js"></script>
-<script src="/js/common.js"></script>
-<script src="/js/passive.js"></script>
-<script src="/js/raters.js"></script>
-<script src="/js/event.js"></script>
+<script src="vendor/supabase/supabase.js"></script>
+<script src="vendor/qrcode/qrcode.js"></script>
+<script src="js/config.js"></script>
+<script src="js/common.js"></script>
+<script src="js/supa.js"></script>
+<script src="js/passive.js"></script>
+<script src="js/raters.js"></script>
+<script src="js/event.js"></script>
 </body>
 </html>

@@ -6,7 +6,7 @@
   CP.$$ = (s, r = document) => [...r.querySelectorAll(s)];
   CP.esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   CP.h = (html) => { const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; };
-  CP.codeFromPath = () => (location.pathname.split('/').filter(Boolean)[1] || new URLSearchParams(location.search).get('code') || '').toUpperCase();
+  CP.codeFromPath = () => (new URLSearchParams(location.search).get('code') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6);
   CP.fmtClock = ms => {
     const s = Math.max(0, Math.round(ms / 1000)); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = s % 60;
     return h ? `${h}:${String(m).padStart(2, '0')}:${String(ss).padStart(2, '0')}` : `${m}:${String(ss).padStart(2, '0')}`;
@@ -345,14 +345,11 @@
   function linkify(s) { return s.replace(/(https?:\/\/[^\s<]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>'); }
 
   // Shown to the host when attendee cameras are on but the join link is plain http (phones block the camera there).
-  // Returns an element, or null when the link is already https.
+  // Returns an element, or null when the link is already https (always the case on the published site).
   CP.httpsHint = joinUrl => {
     if (!/^http:/i.test(joinUrl || '')) return null;
-    const el = CP.h(`<div class="https-hint"><span>📷</span><div><b>Phones can only use their cameras on an https link</b>, and this join link is plain http.
-      Stop CrowdPulse and start it again with <code>npm run secure</code><button class="btn sm ghost" type="button">Copy</button>.
-      It makes its own certificate, so there's nothing to buy. The first time, phones show a "not private" warning: tap <b>Advanced → Proceed</b>.</div></div>`);
-    el.querySelector('button').onclick = () => CP.copy('npm run secure', 'Command copied');
-    return el;
+    return CP.h(`<div class="https-hint"><span>📷</span><div><b>Phones can only use their cameras on an https link</b>, and this join link is plain http.
+      Run the session from the published https site (for example on GitHub Pages) so attendees can share attention with their camera.</div></div>`);
   };
 
   CP.locationText = loc => {
@@ -364,7 +361,7 @@
     return parts.join(' &nbsp;·&nbsp; ');
   };
 
-  CP.brand = `<a class="brand" href="/"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-7 4 14 3-7h6"/></svg></span>CrowdPulse</a>`;
+  CP.brand = `<a class="brand" href="./"><span class="brand-mark"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-7 4 14 3-7h6"/></svg></span>CrowdPulse</a>`;
 
   // reveal-on-scroll
   CP.reveal = () => {

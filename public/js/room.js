@@ -6,9 +6,10 @@
 // laughter and applause are rough estimates from loudness patterns (Web Audio AnalyserNode).
 (function () {
   // MediaPipe tasks-vision (version pinned in package.json), served by this server
-  const MP_BUNDLE = '/vendor/mediapipe/vision_bundle.mjs';
-  const MP_WASM = '/vendor/mediapipe/wasm';
-  const MP_MODEL = '/vendor/models/face_landmarker.task'; // downloaded once and hash-checked by the server (lib/models.js)
+  // served next to the pages (copied from npm by scripts/vendor.mjs; the model is hash-checked when the site is built)
+  const MP_BUNDLE = new URL('vendor/mediapipe/vision_bundle.mjs', document.baseURI).href;
+  const MP_WASM = new URL('vendor/mediapipe/wasm', document.baseURI).href;
+  const MP_MODEL = new URL('vendor/models/face_landmarker.task', document.baseURI).href;
   const SEND_MS = 2000, FACE_MS = 333, AUDIO_MS = 50;
   const YAW_MAX = 28, PITCH_MAX = 24; // degrees from facing the camera that still count as "looking forward"
 

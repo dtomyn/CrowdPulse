@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Control Room · CrowdPulse</title>
 <meta name="theme-color" content="#07051a">
-<link rel="stylesheet" href="/css/style.css">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://127.0.0.1:54321 ws://127.0.0.1:54321; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
 <style>
   .wrap { max-width: 1500px; }
   .cr { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(320px, 1fr) minmax(320px, 1fr); gap: 18px; align-items: start; }
@@ -96,7 +99,7 @@
 </style>
 </head>
 <body>
-<header class="topbar"><span id="brand"></span><span class="pill">CONTROL ROOM</span><span class="spacer"></span><a class="btn sm ghost" href="/admin">← All sessions</a></header>
+<header class="topbar"><span id="brand"></span><span class="pill">CONTROL ROOM</span><span class="spacer"></span><a class="btn sm ghost" href="admin.html">← All sessions</a></header>
 <main class="wrap">
   <div class="hdr">
     <div style="min-width:0;flex:1">
@@ -206,9 +209,13 @@
     </aside>
   </div>
 </main>
-<script src="/socket.io/socket.io.js"></script>
-<script src="/js/common.js"></script>
-<script src="/js/room.js"></script>
-<script src="/js/control.js"></script>
+<script src="vendor/supabase/supabase.js"></script>
+<script src="vendor/qrcode/qrcode.js"></script>
+<script src="js/config.js"></script>
+<script src="js/common.js"></script>
+<script src="js/supa.js"></script>
+<script src="js/room.js"></script>
+<script src="js/simulator.js"></script>
+<script src="js/control.js"></script>
 </body>
 </html>

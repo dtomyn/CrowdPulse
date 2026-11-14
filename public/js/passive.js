@@ -12,9 +12,10 @@
   const { $, esc, h } = CP;
 
   // MediaPipe tasks-vision (version pinned in package.json), served by this server
-  const MP_BUNDLE = '/vendor/mediapipe/vision_bundle.mjs';
-  const MP_WASM = '/vendor/mediapipe/wasm';
-  const MP_MODEL = '/vendor/models/face_landmarker.task'; // downloaded once and hash-checked by the server (lib/models.js)
+  // served next to the pages (copied from npm by scripts/vendor.mjs; the model is hash-checked when the site is built)
+  const MP_BUNDLE = new URL('vendor/mediapipe/vision_bundle.mjs', document.baseURI).href;
+  const MP_WASM = new URL('vendor/mediapipe/wasm', document.baseURI).href;
+  const MP_MODEL = new URL('vendor/models/face_landmarker.task', document.baseURI).href;
   const MIN_CROWD = 5;
   const SEND_MS = 5000;      // one report every ~5 s
   const SAMPLE_MS = 500;     // tab visibility sampling

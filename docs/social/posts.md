@@ -43,7 +43,7 @@ Thanks, Claude, for turning a nostalgia trip into a weekend I'll remember. Tom, 
 #Hackathon #SideProject #AI #ClaudeCode #DeveloperExperience
 
 **Links:** the video link is in the body because you asked for it there. LinkedIn tends to show posts with links to fewer people, so if reach matters more, move it to a first comment along with the code link:
-> Code (open source, runs on your laptop): https://github.com/dtomyn/LocalCrowdRating
+> Code (open source, runs on your laptop): https://github.com/dtomyn/CrowdPulse
 
 ---
 

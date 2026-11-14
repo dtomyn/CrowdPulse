@@ -28,22 +28,34 @@
     lobby(); pollOverlay();
   }
 
+  // Esc or ✕ hides the lobby/wrap-up overlay for the current status; Esc again brings it back.
+  // Keyed on status so the wrap-up screen still appears after a dismissed lobby.
+  let dismissedFor = null;
+  function setLobbyDismissed(on) { if (!S) return; dismissedFor = on ? S.event.status : null; lobby(); }
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape' || !S || S.event.status === 'live') return;
+    setLobbyDismissed(dismissedFor !== S.event.status);
+  });
+
   function lobby() {
     const ev = S.event, L = $('#lobby');
-    if (ev.status === 'live') { L.classList.add('hidden'); return; }
+    if (ev.status === 'live' || dismissedFor === ev.status) { L.classList.add('hidden'); return; }
     L.classList.remove('hidden');
+    const close = `<button class="btn sm lobby-x" id="lobbyX" title="Hide (Esc)" aria-label="Hide overlay">✕</button>`;
     if (ev.status === 'ended') {
-      L.innerHTML = `<div><div class="eyebrow">That's a wrap</div><h1 style="font-size:clamp(2.4rem,7vh,5rem);margin-top:2vh">Thank you! 💜</h1>
+      L.innerHTML = `${close}<div><div class="eyebrow">That's a wrap</div><h1 style="font-size:clamp(2.4rem,7vh,5rem);margin-top:2vh">Thank you! 💜</h1>
         <p class="muted" style="font-size:clamp(1rem,2.4vh,1.6rem)">Scan to leave a quick review</p><div class="qr" style="width:min(32vh,320px)"><img src="${CP.qrFor(code)}"></div><div class="c">${ev.code}</div></div>`;
+      $('#lobbyX').onclick = () => setLobbyDismissed(true);
       return;
     }
-    L.innerHTML = `<div><div class="eyebrow">Starting soon · ${esc(CP.fmtDate(ev.startsAt))}</div>
+    L.innerHTML = `${close}<div><div class="eyebrow">Starting soon · ${esc(CP.fmtDate(ev.startsAt))}</div>
       <h1 style="font-size:clamp(2rem,6vh,4.4rem);margin-top:1.5vh;max-width:80vw">${esc(ev.title)}</h1>
       ${ev.presenter ? `<div class="muted" style="font-size:clamp(1rem,2.2vh,1.5rem)">with ${esc(ev.presenter)}</div>` : ''}
       <div class="qr"><img src="${CP.qrFor(code)}"></div>
       <div class="muted" style="font-size:clamp(1rem,2.2vh,1.4rem)">Scan or go to <b>${esc(CP.siteLabel())}</b> and enter</div>
       <div class="c gradient-text">${ev.code}</div>
       <div class="crowd-dots" id="dots"></div><div class="muted" id="dotsN" style="margin-top:1vh"></div></div>`;
+    $('#lobbyX').onclick = () => setLobbyDismissed(true);
     paintDots();
   }
   function paintDots() {

@@ -111,13 +111,56 @@
     return mpPromise;
   }
 
+  // ---------- fatigue ----------
+  // Raw fatigue (0-100) from a stream of face readings. Four signs, strongest first:
+  //   heavy eyelids  how far the eyes are closed while open, against this person's own baseline (eyes differ, so
+  //                  an absolute threshold would read some people as always tired and others as never)
+  //   eyes shut      share of the last 30 s with the eyes closed (PERCLOS)
+  //   slow blinks    closures of 300 ms or more; faces are analysed every ~150 ms, so quick blinks are mostly missed
+  //   yawns          the mouth wide open for over a second
+  // update(now, { blink, jaw, smile } | null) -> raw fatigue; null when no face is in view.
+  function fatigueModel() {
+    const F = { hist: [], lid: [], slow: [], yawns: [], closeStart: 0, yawnStart: 0, yawnCounted: false, base: null, baseT: 0, since: null };
+    return function update(now, f) {
+      if (!f) { F.closeStart = 0; F.yawnStart = 0; return null; }
+      F.since ??= now;
+      const closed = f.blink > 0.5;
+      F.hist.push({ t: now, closed });
+      while (F.hist.length && now - F.hist[0].t > 30000) F.hist.shift();
+      if (closed) F.closeStart ||= now;
+      else if (F.closeStart) { if (now - F.closeStart >= 300) F.slow.push(now); F.closeStart = 0; }
+      if (f.jaw > 0.4) {
+        F.yawnStart ||= now;
+        if (!F.yawnCounted && now - F.yawnStart > 1000) { F.yawns.push(now); F.yawnCounted = true; }
+      } else { F.yawnStart = 0; F.yawnCounted = false; }
+      F.slow = F.slow.filter(t => now - t < 60000);
+      F.yawns = F.yawns.filter(t => now - t < 120000);
+
+      // eyelid level while the eyes are open; smiling narrows the eyes, so skip those moments
+      if (!closed && f.smile < 0.3) F.lid.push({ t: now, v: f.blink });
+      while (F.lid.length && now - F.lid[0].t > 20000) F.lid.shift();
+      let droop = 0;
+      if (F.lid.length >= 10) {
+        const lid = F.lid.reduce((a, x) => a + x.v, 0) / F.lid.length;
+        // baseline: the person's alert eyelid level. Follows them down at once, and up only slowly (~10 min),
+        // so getting sleepy shows as a rise instead of becoming the new normal.
+        if (F.base == null || lid < F.base) F.base = lid;
+        else F.base += (lid - F.base) * (1 - Math.exp(-Math.min(2, (now - F.baseT) / 1000) / 600));
+        F.baseT = now;
+        if (now - F.since > 15000) droop = clamp((lid - F.base - 0.03) / 0.2);
+      }
+      const perclos = F.hist.filter(x => x.closed).length / Math.max(1, F.hist.length);
+      return 100 * clamp(droop * 0.5 + Math.max(0, perclos - 0.03) / 0.2 * 0.5 + F.slow.length * 0.06 + F.yawns.length * 0.25);
+    };
+  }
+
   // ---------- camera: on-device face analysis ----------
   function faceCamera({ onUpdate, onError }) {
     let stream = null, video = null, timer = null, landmarker = null, running = false, gen = 0, lastTs = 0, errs = 0, calls = 0, costAvg = null;
-    let R, F; // smoothed readings, fatigue state
+    let R, fatigue; // smoothed readings, fatigue model
     const reset = () => {
       R = { att: null, pos: null, fat: null, face: false, paused: false, ready: false, samples: 0, t: 0 };
-      F = { hist: [], blinks: [], longCloses: [], yawns: [], closeStart: 0, yawnStart: 0, yawnCounted: false, since: performance.now() };
+      fatigue = fatigueModel();
     };
     reset();
 
@@ -134,7 +177,7 @@
       if (!res?.faceLandmarks?.length || !cats) {
         // nobody in view: attention drifts down, expression readings hold
         R.face = false; R.att = ema(R.att, 0, dt, 2.5);
-        F.closeStart = 0; F.yawnStart = 0;
+        fatigue(now, null);
       } else {
         R.face = true;
         const b = {}; for (const c of cats) b[c.categoryName] = c.score;
@@ -162,24 +205,7 @@
         const posRaw = 100 * clamp((smile - 0.06) / 0.5 + squint * 0.15);
         R.pos = ema(R.pos, posRaw, dt, 3);
 
-        // fatigue: share of time the eyes are closed, long eye closures, blink rate and yawns
-        const closed = blink > 0.55;
-        F.hist.push({ t: now, closed });
-        while (F.hist.length && now - F.hist[0].t > 30000) F.hist.shift();
-        if (closed) { if (!F.closeStart) F.closeStart = now; }
-        else if (F.closeStart) { const d = now - F.closeStart; F.blinks.push(now); if (d > 450) F.longCloses.push(now); F.closeStart = 0; }
-        if (jaw > 0.5) {
-          if (!F.yawnStart) F.yawnStart = now;
-          else if (!F.yawnCounted && now - F.yawnStart > 1500) { F.yawns.push(now); F.yawnCounted = true; }
-        } else { F.yawnStart = 0; F.yawnCounted = false; }
-        F.blinks = F.blinks.filter(t => now - t < 60000);
-        F.longCloses = F.longCloses.filter(t => now - t < 60000);
-        F.yawns = F.yawns.filter(t => now - t < 120000);
-        const perclos = F.hist.filter(x => x.closed).length / Math.max(1, F.hist.length);
-        const minutes = Math.min(1, (now - F.since) / 60000);
-        const blinkRate = minutes > 0.2 ? F.blinks.length / minutes : 0;
-        const fatRaw = 100 * clamp(Math.max(0, perclos - 0.04) / 0.25 * 0.6 + F.yawns.length * 0.3 + F.longCloses.length * 0.08 + Math.max(0, blinkRate - 28) * 0.01);
-        R.fat = ema(R.fat, fatRaw, dt, 5);
+        R.fat = ema(R.fat, fatigue(now, { blink, jaw, smile }), dt, 5);
       }
       if (!R.ready && R.samples >= 6) R.ready = true;
       onUpdate?.(view());
@@ -526,5 +552,5 @@
     };
   }
 
-  CP.passive = { init, tabTracker, cameraSupport, MIN_CROWD };
+  CP.passive = { init, tabTracker, cameraSupport, fatigueModel, MIN_CROWD };
 })();

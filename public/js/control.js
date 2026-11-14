@@ -2,12 +2,13 @@
 (function () {
   const { $, $$, esc, h } = CP;
   const code = CP.codeFromPath();
-  const key = new URLSearchParams(location.search).get('key') || CP.store.get('cp.keys', {})[code];
+  // the admin key arrives in the link's #fragment (never sent to any server); it's only needed the first time
+  const key = new URLSearchParams(location.hash.slice(1)).get('key') || new URLSearchParams(location.search).get('key') || CP.store.get('cp.keys', {})[code];
   CP.backdrop({ intensity: .2 });
   $('#brand').outerHTML = CP.brand;
-  if (key) { const keys = CP.store.get('cp.keys', {}); keys[code] = key; CP.store.set('cp.keys', keys); history.replaceState(null, '', location.pathname); }
+  if (key) { const keys = CP.store.get('cp.keys', {}); keys[code] = key; CP.store.set('cp.keys', keys); history.replaceState(null, '', CP.page('control.html', { code })); }
 
-  const socket = io({ transports: ['websocket', 'polling'] });
+  const socket = CP.connect({ code, ticker: 'always' });
   let S = null, summary = null, simulating = false;
   const gauge = CP.gauge($('#gauge')), dist = CP.distBars($('#dist'));
   const chart = CP.pulseChart($('#chart'), { windowMs: 900000 });
@@ -15,9 +16,8 @@
   const emit = (name, p) => new Promise(res => socket.emit(name, p, r => { if (r?.error) CP.toast('⚠️ ' + r.error); res(r); }));
 
   socket.on('connect', () => socket.emit('admin-join', { code, key }, res => {
-    if (res.error) { document.querySelector('main').innerHTML = `<div class="card empty" style="max-width:520px;margin:60px auto"><span class="big">🔒</span>${esc(res.error)}. Open this session from the <a href="/admin">host dashboard</a>.</div>`; return; }
-    S = res; summary = res.summary; simulating = summary.simulating;
-    S.reactionsCount?.forEach?.(() => {});
+    if (res.error) { document.querySelector('main').innerHTML = `<div class="card empty" style="max-width:520px;margin:60px auto"><span class="big">🔒</span>${esc(res.error)}. Open this session from the <a href="admin.html">host dashboard</a>.</div>`; return; }
+    S = res; summary = { ...res.summary, joinUrl: CP.joinUrl(code) }; simulating = sim.running;
     init();
   }));
 
@@ -27,10 +27,10 @@
     document.title = ev.title + ' · Control Room';
     $('#title').textContent = ev.title; $('#code').textContent = ev.code;
     $('#code').onclick = () => CP.copy(summary.joinUrl, 'Join link copied');
-    $('#qr').src = `/api/events/${code}/qr.svg`; $('#link').textContent = summary.joinUrl;
+    $('#qr').src = CP.qrFor(code); $('#link').textContent = summary.joinUrl;
     $('#copyLink').onclick = () => CP.copy(summary.joinUrl, 'Join link copied');
-    $('#stageLink').href = `/stage/${code}`; $('#reportLink').href = `/report/${code}?key=${key}`;
-    $('#csv').href = `/api/events/${code}/export.csv?key=${key}`;
+    $('#stageLink').href = CP.page('stage.html', { code }); $('#reportLink').href = CP.page('report.html', { code });
+    $('#csv').href = '#'; $('#csv').onclick = e => { e.preventDefault(); CP.downloadCsv(code); };
     chart.setStart(ev.startedAt); chart.set(S.history); chart.markers(S.markers);
     const last = S.markers[S.markers.length - 1]; $('#curMarker').textContent = last ? 'Now: ' + last.label : '';
     S.reactions.forEach(e => (reactCounts[e] ||= 0));
@@ -48,7 +48,7 @@
     if (ev.status === 'live') add(`<button class="btn danger">🏁 End session</button>`, async () => { if (confirm('End the session? Attendees will be asked for feedback.')) await emit('admin:end'); });
     if (ev.status === 'ended') {
       add(`<button class="btn">↺ Reopen</button>`, () => emit('admin:reopen'));
-      add(`<a class="btn primary" href="/report/${code}?key=${key}">📊 View report</a>`, () => {});
+      add(`<a class="btn primary" href="${CP.page('report.html', { code })}">📊 View report</a>`, () => {});
     }
   }
   setInterval(() => {
@@ -63,7 +63,7 @@
     if (was !== ev.status) { chart.setStart(ev.startedAt); paintStatus(); }
     paintSettings();
   });
-  socket.on('admin-summary', s => { summary = s; simulating = s.simulating; paintSim(); $('#kJoined').textContent = s.stats.participants + ' joined'; });
+  socket.on('admin-summary', s => { summary = { ...s, joinUrl: CP.joinUrl(code) }; paintSim(); $('#kJoined').textContent = s.stats.participants + ' joined'; });
   socket.on('feedback-count', n => CP.toast(`💌 ${n} feedback response${n === 1 ? '' : 's'}`, 1500));
 
   // ---------- pulse ----------
@@ -285,9 +285,12 @@
 
   // ---------- simulator ----------
   $('#simCount').oninput = e => ($('#simN').textContent = e.target.value);
+  const sim = CP.simulator({ getState: () => S, send: ops => socket.emit('admin:sim', { ops }) });
+  window.addEventListener('pagehide', () => { if (sim.running) { sim.stop(); socket.emit('admin:simulate', { on: false }); } });
   $('#simBtn').onclick = async () => {
-    const r = await emit('admin:simulate', { on: !simulating, count: +$('#simCount').value });
-    simulating = r.simulating; paintSim();
+    if (simulating) sim.stop(); else sim.start(+$('#simCount').value);
+    simulating = sim.running; paintSim();
+    await emit('admin:simulate', { on: simulating });
     if (simulating && S.event.status === 'scheduled') CP.toast('🤖 Bots are in the lobby — hit "Go live" to see them rate');
   };
   function paintSim() {

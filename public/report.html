@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Session Report · CrowdPulse</title>
 <meta name="theme-color" content="#07051a">
-<link rel="stylesheet" href="/css/style.css">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://127.0.0.1:54321 ws://127.0.0.1:54321; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
 <style>
   .hero { display: grid; grid-template-columns: 1fr auto; gap: 30px; align-items: center; margin: 10px 0 26px; }
   .grade { width: 210px; height: 210px; position: relative; }
@@ -85,8 +88,12 @@
   <div class="toolbar"><button class="btn sm" id="print">🖨️ PDF</button><a class="btn sm hidden" id="csv">⬇ CSV</a><button class="btn sm" id="json">{ } JSON</button><a class="btn sm hidden" id="back">🎛️ Control room</a></div>
 </header>
 <main class="wrap" id="root"><div class="empty" style="margin-top:20vh"><span class="big spin" style="display:inline-block">✨</span><br>Crunching the numbers…</div></main>
-<script src="/vendor/chart.js/chart.umd.js"></script>
-<script src="/js/common.js"></script>
-<script src="/js/report.js"></script>
+<script src="vendor/chart.js/chart.umd.js"></script>
+<script src="vendor/supabase/supabase.js"></script>
+<script src="vendor/qrcode/qrcode.js"></script>
+<script src="js/config.js"></script>
+<script src="js/common.js"></script>
+<script src="js/supa.js"></script>
+<script src="js/report.js"></script>
 </body>
 </html>

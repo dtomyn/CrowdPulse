@@ -1,6 +1,7 @@
 {
   "version": "0.0.1",
   "configurations": [
-    { "name": "crowdpulse", "runtimeExecutable": "node", "runtimeArgs": ["server.js"], "port": 3000 }
+    { "name": "crowdpulse", "runtimeExecutable": "node", "runtimeArgs": ["scripts/dev.mjs"], "port": 3000 },
+    { "name": "crowdpulse-local", "runtimeExecutable": "node", "runtimeArgs": ["scripts/dev.mjs", "--local"], "port": 3000 }
   ]
 }

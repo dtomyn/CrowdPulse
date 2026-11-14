@@ -5,7 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>CrowdPulse</title>
 <meta name="theme-color" content="#07051a">
-<link rel="stylesheet" href="/css/style.css">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob:; media-src 'self' blob:; connect-src 'self' https://*.supabase.co wss://*.supabase.co http://127.0.0.1:54321 ws://127.0.0.1:54321; worker-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'self'">
+<meta name="referrer" content="no-referrer">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/style.css">
 <style>
   .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px; align-items: center; min-height: calc(100vh - 140px); }
   .hero p.lead { font-size: 1.15rem; color: var(--muted); max-width: 540px; margin: 18px 0 28px; }
@@ -36,7 +39,7 @@
 </style>
 </head>
 <body>
-<header class="topbar"><span id="brand"></span><span class="spacer"></span><a class="btn sm" href="/admin">🎤 Host dashboard</a></header>
+<header class="topbar"><span id="brand"></span><span class="spacer"></span><a class="btn sm" href="admin.html">🎤 Host dashboard</a></header>
 <main class="wrap">
   <section class="hero">
     <div>
@@ -73,7 +76,11 @@
     <div class="card feature reveal"><div class="ico">🏆</div><h3>Post-show report</h3><p>Grades, NPS, key moments, word clouds, sentiment, engagement funnel and CSV export.</p></div>
   </section>
 </main>
-<script src="/js/common.js"></script>
-<script src="/js/home.js"></script>
+<script src="vendor/supabase/supabase.js"></script>
+<script src="vendor/qrcode/qrcode.js"></script>
+<script src="js/config.js"></script>
+<script src="js/common.js"></script>
+<script src="js/supa.js"></script>
+<script src="js/home.js"></script>
 </body>
 </html>

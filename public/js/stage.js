@@ -3,7 +3,7 @@
   const { $, esc, h } = CP;
   const code = CP.codeFromPath();
   const bg = CP.backdrop({ intensity: .34, stars: 140 });
-  const socket = io({ transports: ['websocket', 'polling'] });
+  const socket = CP.connect({ code, ticker: 'always' });
   const gauge = CP.gauge($('#gauge'), { big: true });
   const chart = CP.pulseChart($('#chart'), { windowMs: 0 });
   let S = null, joinUrl = '';
@@ -11,7 +11,7 @@
 
   socket.on('connect', () => socket.emit('watch', { code }, res => {
     if (res.error) { document.body.innerHTML = '<div class="empty" style="margin-top:20vh">Session not found</div>'; return; }
-    S = res; joinUrl = res.joinUrl; render();
+    S = res; joinUrl = CP.joinUrl(code); render();
   }));
 
   function render() {
@@ -19,7 +19,7 @@
     document.documentElement.style.setProperty('--accent', ev.accent);
     document.title = ev.title + ' · Stage';
     $('#title').textContent = ev.title; $('#code').textContent = ev.code;
-    $('#qr').src = `/api/events/${code}/qr.svg`; $('#host').textContent = new URL(joinUrl).host;
+    $('#qr').src = CP.qrFor(code); $('#host').textContent = CP.siteLabel();
     $('#pill').innerHTML = `<span class="pill ${ev.status}">${ev.status === 'live' ? 'LIVE' : ev.status.toUpperCase()}</span>`;
     chart.setStart(ev.startedAt); chart.set(S.history); chart.markers(S.markers);
     const m = S.markers[S.markers.length - 1]; $('#marker').textContent = m ? '· ' + m.label : '';
@@ -34,14 +34,14 @@
     L.classList.remove('hidden');
     if (ev.status === 'ended') {
       L.innerHTML = `<div><div class="eyebrow">That's a wrap</div><h1 style="font-size:clamp(2.4rem,7vh,5rem);margin-top:2vh">Thank you! 💜</h1>
-        <p class="muted" style="font-size:clamp(1rem,2.4vh,1.6rem)">Scan to leave a quick review</p><div class="qr" style="width:min(32vh,320px)"><img src="/api/events/${code}/qr.svg"></div><div class="c">${ev.code}</div></div>`;
+        <p class="muted" style="font-size:clamp(1rem,2.4vh,1.6rem)">Scan to leave a quick review</p><div class="qr" style="width:min(32vh,320px)"><img src="${CP.qrFor(code)}"></div><div class="c">${ev.code}</div></div>`;
       return;
     }
     L.innerHTML = `<div><div class="eyebrow">Starting soon · ${esc(CP.fmtDate(ev.startsAt))}</div>
       <h1 style="font-size:clamp(2rem,6vh,4.4rem);margin-top:1.5vh;max-width:80vw">${esc(ev.title)}</h1>
       ${ev.presenter ? `<div class="muted" style="font-size:clamp(1rem,2.2vh,1.5rem)">with ${esc(ev.presenter)}</div>` : ''}
-      <div class="qr"><img src="/api/events/${code}/qr.svg"></div>
-      <div class="muted" style="font-size:clamp(1rem,2.2vh,1.4rem)">Scan or go to <b>${esc(new URL(joinUrl).host)}</b> and enter</div>
+      <div class="qr"><img src="${CP.qrFor(code)}"></div>
+      <div class="muted" style="font-size:clamp(1rem,2.2vh,1.4rem)">Scan or go to <b>${esc(CP.siteLabel())}</b> and enter</div>
       <div class="c gradient-text">${ev.code}</div>
       <div class="crowd-dots" id="dots"></div><div class="muted" id="dotsN" style="margin-top:1vh"></div></div>`;
     paintDots();

@@ -1,5 +1,5 @@
-// Post-session analytics: turns the raw event log into a rich report.
-const { MIN_CROWD } = require('./passive');
+// Post-session analytics (shared by the report Edge Function). Ported from the old server's lib/analytics.js.
+const MIN_CROWD = 5; // crowd figures need at least this many people (same threshold as the live pulse)
 
 const POS = new Set(('love loved great awesome amazing excellent good nice cool wow brilliant fantastic helpful clear ' +
   'insightful interesting fun funny yes agree perfect best smart inspiring useful thanks thank beautiful epic ' +
@@ -515,4 +515,4 @@ function publicEvent(ev) {
   };
 }
 
-module.exports = { buildReport, publicEvent, sentimentOf, mean };
+export { buildReport, publicEvent, sentimentOf, mean };

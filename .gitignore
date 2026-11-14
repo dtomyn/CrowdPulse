@@ -1,7 +1,8 @@
 # Dependencies
 node_modules/
 
-# App data (sessions, ratings, chat) — local and private
+# Built site (npm run build) and cached face-analysis model
+dist/
 data/
 
 # Environment and secrets

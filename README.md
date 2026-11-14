@@ -4,57 +4,104 @@ Real-time audience rating for talks, workshops and meetings. Attendees scan a QR
 
 See: https://youtu.be/wk60oe0w6Aw
 
-## Run it
+## How it runs
+
+CrowdPulse is a static website plus a [Supabase](https://supabase.com) project. There's no server of your own to keep running:
+
+- **The pages** (`public/`) are plain HTML, CSS and JavaScript. GitHub Pages hosts them (any static host works).
+- **Supabase** holds the data (Postgres), signs people in, delivers live updates (Realtime) and builds reports (one Edge Function). All of it fits Supabase's free plan.
+
+Everything Supabase needs is in `supabase/`: the database, its security rules and logic in `supabase/migrations/`, and the report function in `supabase/functions/report/`.
+
+## Set up Supabase (once)
+
+1. **Create a project** at [supabase.com](https://supabase.com) and put its Project URL and publishable key in `public/js/config.js`. Both are meant to be public. Never put the secret (`service_role`) key or the database password in the site.
+2. **Sign-in settings** (dashboard → Authentication):
+   - *Sign In / Providers*: turn on **Allow anonymous sign-ins** (attendees join without an account) and keep **Email** on (hosts sign in with a link).
+   - *URL Configuration*: set the **Site URL** to the published site (for example `https://<you>.github.io/CrowdPulse/`) and add these **Redirect URLs**: `https://<you>.github.io/CrowdPulse/**` and `http://localhost:3000/**`.
+   - *Rate Limits*: raise **anonymous sign-ins per hour** (default 30 per IP address) to more than your biggest audience, for example 1000. Everyone on a venue's Wi-Fi usually shares one IP address, so the default would turn people away after the 30th phone.
+3. **Create the database and the report function.** You'll need the database password from when you created the project:
+
+   ```bash
+   npx supabase login
+   ```
+
+   ```bash
+   npx supabase link --project-ref <project-ref>
+   ```
+
+   ```bash
+   npx supabase db push
+   ```
+
+   ```bash
+   npx supabase functions deploy report
+   ```
+
+   The project ref is the part of the Project URL before `.supabase.co`. Run `db push` again whenever `supabase/migrations/` changes, and `functions deploy report` whenever the report function changes.
+4. **Say who can host.** Only email addresses on the host list can create sessions. Add yours in the dashboard's SQL Editor:
+
+   ```sql
+   insert into public.hosts (email) values ('you@example.com');
+   ```
+
+## Publish on GitHub Pages
+
+In the repository's **Settings → Pages**, set **Source** to **GitHub Actions**. Every push to `main` then builds the site (`npm run build`) and publishes it with `.github/workflows/pages.yml`, at `https://<you>.github.io/CrowdPulse/`. On the free GitHub plan, Pages needs a public repository.
+
+Then:
+
+- **Hosts** open `admin.html` (the 🎤 Host dashboard link on the home page) and sign in with their email.
+- **Attendees** scan the QR code or type the code on the home page. Pages always uses https, so phone cameras work without any certificate setup.
+
+## Run it locally
 
 ```bash
 npm install
-npm start
 ```
 
-- Host dashboard: http://localhost:3000/admin
-- Attendees: the QR code / join link uses your LAN IP (e.g. `http://192.168.x.x:3000/e/CODE`), so phones on the same Wi-Fi can join.
+```bash
+npm run dev
+```
+
+This serves the pages at http://localhost:3000, connected to the Supabase project in `public/js/config.js`. Edit a file and reload to see the change.
+
+To work without touching that project, run Supabase on your computer (needs [Docker](https://www.docker.com/)):
+
+```bash
+npm run db:start
+```
+
+```bash
+npx supabase functions serve
+```
+
+```bash
+npm run dev:local
+```
+
+`db:start` creates the database from `supabase/migrations/`, and `dev:local` points the pages at it. Add a host with the SQL above in the local Studio (http://127.0.0.1:54323). Sign-in emails don't leave your computer: open them in Mailpit at http://127.0.0.1:54324. `npm run db:reset` starts the local database over.
 
 ### Dev container
 
-Open the folder in VS Code and choose **Dev Containers: Reopen in Container**. It installs Node 24 and the dependencies, and forwards port 3000. Run `npm run dev` in the container's terminal and open http://localhost:3000/admin.
+Open the folder in VS Code and choose **Dev Containers: Reopen in Container**. It installs Node 24 and the dependencies, and forwards port 3000. Run `npm run dev` in the container's terminal and open http://localhost:3000.
 
-Inside a container, CrowdPulse sees the container's own address, not your laptop's, so QR codes point somewhere phones can't reach. To test with phones, set `PUBLIC_URL` to your laptop's address (e.g. `PUBLIC_URL=http://192.168.x.x:3000 npm run dev`) and set VS Code's `remote.localPortHost` to `allInterfaces` so the forwarded port is reachable from your Wi-Fi.
+The container talks to the Supabase project in `public/js/config.js`. The local Supabase stack (`npm run db:start`) needs Docker, which isn't available inside the container, so run that one on your computer instead. Join links and QR codes point at the address in your browser (`localhost`), which phones can't reach. To test with phones, use the published site.
 
-### HTTPS (needed for phone cameras)
+## How it's secured
 
-Phones only let a page use the camera over `https`. To turn it on, start CrowdPulse with:
+- **Everyone has a session.** Attendees are signed in anonymously in the background, so each phone has its own identity without an account. Hosts sign in by email, and only addresses in `public.hosts` can create sessions.
+- **The database is closed to the browser.** Row Level Security is on for every table with no policies, so browsers can't read or write tables directly. They can only call the functions granted at the end of the migration, and each one checks who's calling and validates its input: lengths, ranges, a profanity filter, and per-person rate limits on chat, reactions, questions and votes.
+- **Admins are tracked per session.** Whoever creates a session runs it. The 🔑 **Co-host link** in the dashboard lets someone else (or another laptop) run it too. Its key travels in the link's `#fragment`, so it's never sent to any server.
+- **Live updates use private channels.** Everyone in a session can listen on its channel, and only its admins can listen on the admin channel. Only the database sends on them.
+- **People are identified by a public id.** Chat, Q&A and reports show a random public id, never anyone's account id.
+- **Per-person passive data stays in the database.** The report function reads it with the service role and returns only crowd figures. Only hosts can download the raw CSV.
+- **Pages only run their own scripts.** Each page sets a strict Content Security Policy (no inline scripts, no `eval`), so keep page scripts in `public/js/`, not in `<script>` blocks or `onclick=` attributes.
 
-```bash
-npm run secure
-```
+### Free-plan limits worth knowing
 
-That's the whole setup. You don't need to buy or install a certificate. On first run, CrowdPulse makes its own (a *self-signed* certificate) for `localhost`, this computer's name and its current Wi-Fi address, and saves it in `data/certs/`. It's reused for a year, and a new one is made automatically if your laptop gets a different address. QR codes and join links switch to `https://`.
-
-The first time each device opens the page, the browser warns that the connection is "not private". That's expected with a certificate you made yourself:
-
-- **Android / Chrome / Edge:** tap **Advanced** → **Proceed to …**
-- **iPhone / Safari:** tap **Show Details** → **visit this website** → **Visit Website**
-
-Once someone accepts it, cameras work and everything else carries on as normal. The startup message prints the certificate's SHA-256 fingerprint if you want to check that phones are talking to your laptop.
-
-The control room and dashboard show the `npm run secure` command, with a Copy button, whenever you turn on attendee cameras while the join link is plain `http`.
-
-No warnings at all? Use a certificate that devices already trust:
-
-- **A tunnel** (free, gives a trusted `https://…` address, needs internet). Install [cloudflared](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/), run `cloudflared tunnel --url http://localhost:3000`, then start CrowdPulse with `PUBLIC_URL` set to the address it prints. Keep using the host dashboard at `http://localhost:3000/admin` on your laptop: requests through the tunnel can't open it unless you set `ADMIN_PIN`.
-- **Your own certificate** (for example from [mkcert](https://github.com/FiloSottile/mkcert), with its root installed on each phone). Set `HTTPS_CERT` and `HTTPS_KEY` to the PEM files.
-
-Optional environment variables:
-
-| Variable | Purpose |
-|---|---|
-| `PORT` | Port to listen on (default `3000`) |
-| `PUBLIC_URL` | Base URL to put in QR codes, e.g. when behind a tunnel or reverse proxy (`https://pulse.example.com`) |
-| `HTTPS` | `1` to serve over https (same as `npm run secure`) |
-| `HTTPS_CERT`, `HTTPS_KEY` | Paths to your own certificate and key (PEM). Turns on https with them instead of the self-made one |
-| `ADMIN_PIN` | Require a PIN to list or create sessions in the host dashboard. Without it, the dashboard only works on the computer running CrowdPulse (requests through a tunnel or proxy don't count as local). It must be at least 6 characters (CrowdPulse won't start with a shorter one). 10 wrong tries locks that address out for 5 minutes, and 30 wrong tries from any mix of devices within 15 minutes pauses PIN sign-in from other devices for 15 minutes. The dashboard on the computer running CrowdPulse always keeps working |
-
-Data is stored in `data/db.json`.
+- A free Supabase project **pauses after a week with no activity**. Open the dashboard and restore it before an event, or keep it busy.
+- Live updates count against the free plan's monthly **Realtime messages**. The live pulse goes out every 2 seconds, and reactions ride along with it to save messages. Very large or very long sessions use the most.
 
 ## Features
 
@@ -75,19 +122,20 @@ Data is stored in `data/db.json`.
 - Lobby countdown before the start; at the end, a feedback form (stars, NPS, detail ratings, one word, comment)
 - Custom name, avatar and colour
 
-**Control room** (`/admin/CODE`)
+**Control room** (`control.html?code=CODE`)
 - Go live / end / reopen, with an elapsed timer that warns when you run over time
 - Spring-animated gauge, distribution bars, streaming mood chart (5m / 15m / all)
 - **Presenter coach**: alerts when mood drops or spikes, when energy is high, or when few people are rating
 - Chapter markers ("Live demo", "Q&A" and so on) that show up on every chart and in the report
 - Quick polls with templates, broadcast banners, confetti
 - Chat moderation (pin/delete), Q&A moderation (answer, hide, spotlight on every screen)
-- 🤖 **Demo audience simulator**: 5–120 bots that rate along a story arc, react, chat, ask, upvote, vote and leave feedback. Useful for rehearsals and demos
+- 🤖 **Demo audience simulator**: 5–120 bots that rate along a story arc, react, chat, ask, upvote, vote and leave feedback. Useful for rehearsals and demos. The bots run in the control room, so they stop when you close it
 - CSV export, reset
+- 🔑 Co-host link: lets someone else run the session from their own device
 
-**Stage view** (`/stage/CODE`): projector-friendly, with a giant QR code lobby, live gauge, chat ticker, poll overlay, spotlighted questions and reactions.
+**Stage view** (`stage.html?code=CODE`): projector-friendly, with a giant QR code lobby, live gauge, chat ticker, poll overlay, spotlighted questions and reactions.
 
-**Report** (`/report/CODE`)
+**Report** (`report.html?code=CODE`)
 - Animated letter grade and overall score
 - KPIs: attendees, peak online, average/median/σ, final mood, ratings, reactions, messages, questions, engagement
 - Auto-written insights
@@ -112,18 +160,21 @@ Besides what people rate, CrowdPulse can show what the room shows without anyone
 
 How it's kept safe:
 
-- **No raw data:** no images, video or audio are sent or stored, only the numbers above (`lib/passive.js` drops anything else).
-- **No outside code:** the face-analysis code (MediaPipe) is an npm dependency served by CrowdPulse itself, pinned by hash in `package-lock.json`. The face model isn't on npm, so the first time a camera is used, the server downloads it from Google, checks it against a fixed SHA-256 (`lib/models.js`) and keeps it in `data/models/`. After that, cameras work without internet.
+- **No raw data:** no images, video or audio are sent or stored, only the numbers above (the database functions drop anything else).
+- **No outside code:** the face-analysis code (MediaPipe) is an npm dependency published with the site, pinned by hash in `package-lock.json`. The face model isn't on npm, so the build downloads it from Google, checks it against a fixed SHA-256 (`scripts/vendor.mjs`) and publishes it with the site.
 - **Crowd figures only:** they appear only once at least **5 people** contribute, so no one can be singled out, and they're exported as crowd figures only.
 - **Kept apart from ratings:** passive data is never blended into the rating score. It's shown as its own **Attention** line, so you can see where what people said and what the room showed disagree. The coach flags "polite but distracted" moments.
 - **Camera use is visible:** the camera only starts after a click, shows a "camera on" indicator with a Stop button, and previews exactly what is sent.
-- **Know the rules where you present:** cameras need HTTPS or localhost (phones on plain `http://` over Wi-Fi can't use them, so start with `npm run secure`; see [HTTPS](#https-needed-for-phone-cameras)). Emotion recognition is restricted in workplaces and education under the EU AI Act, and face data is biometric data under GDPR and laws like Illinois's BIPA. Use these sources only where that's appropriate, and tell the room.
+- **Know the rules where you present:** cameras need HTTPS or localhost, which the published site always has. Emotion recognition is restricted in workplaces and education under the EU AI Act, and face data is biometric data under GDPR and laws like Illinois's BIPA. Use these sources only where that's appropriate, and tell the room.
 
 Expression and attention estimates are approximate. Treat them as a hint alongside the ratings, not a verdict. The demo audience simulator produces passive data too, so you can preview everything without real people.
 
 ## Explainer video
 
-A narrated walkthrough of the app, filmed from the real pages one exact frame at a time, lives in `film/`:
+A narrated walkthrough of the app, filmed from the real pages one exact frame at a time, lives in `film/`.
+
+> **Needs updating:** the film pipeline still drives the old Node server (`server.js` and `lib/`), which the Supabase version replaced. To re-render the film, use the last commit before the move to Supabase until the pipeline is ported.
+
 
 - `film/studio/director.js`: the scenes, narration, camera moves (zoom-ins), cursor and overlays
 - `film/studio/shim.js`: runs every page on a virtual clock (timers, animation frames and CSS animations) so frames are deterministic
@@ -146,6 +197,6 @@ The report scene shows a reproducible 30-minute session built by `node film/fixt
 
 ## Stack
 
-Node.js, Express and Socket.IO, with `qrcode` for QR codes and Chart.js for report charts. The live gauge, streaming chart, backdrop and rating widgets are hand-built in canvas/SVG. There is no build step.
+Static HTML, CSS and JavaScript (no framework), with Supabase for the database, sign-in, Realtime and the report function (`@supabase/supabase-js`), `qrcode-generator` for QR codes made in the browser and Chart.js for report charts. The live gauge, streaming chart, backdrop and rating widgets are hand-built in canvas/SVG. The build (`npm run build`) only copies files into `dist/`: `public/`, the libraries from `node_modules` and the face model.
 
-Pages only run script files served by CrowdPulse: every response sends a strict Content Security Policy (no inline scripts, no `eval`), so keep page scripts in `public/js/` rather than in `<script>` blocks or `onclick=` attributes.
+In the browser, `public/js/supa.js` gives the pages a small socket.io-style connection: `socket.emit(...)` calls a database function and `socket.on(...)` receives a Realtime broadcast. The database works out the live pulse (`cp_tick`) every 2 seconds. The control room and stage screen keep it going, and attendee pages step in if both are closed.

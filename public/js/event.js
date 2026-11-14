@@ -3,7 +3,7 @@
   const { $, $$, esc, h } = CP;
   const code = CP.codeFromPath();
   const bg = CP.backdrop();
-  $('#brandMark').outerHTML = `<a href="/" class="brand-mark" style="flex:none"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-7 4 14 3-7h6"/></svg></a>`;
+  $('#brandMark').outerHTML = `<a href="./" class="brand-mark" style="flex:none"><svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h4l3-7 4 14 3-7h6"/></svg></a>`;
 
   let me = CP.profile();
   let myPub = me.pid; // replaced by the server's public id for us on join
@@ -11,7 +11,7 @@
   let myRating = null, mode = CP.store.get('cp.mode', 'slider'), widget = null;
   let tab = 'rate', unread = { chat: 0, qa: 0, polls: 0 };
   let gauge = null, dist = null, chart = null;
-  const socket = io({ transports: ['websocket', 'polling'] });
+  const socket = CP.connect({ code, ticker: 'fallback' });
   // passive signals (tab focus + opt-in on-device camera); see js/passive.js
   const pv = CP.passive.init({ socket, code, onShowPanel: () => { if (!matchMedia('(min-width: 901px)').matches) setTab('rate'); } });
 
@@ -21,7 +21,7 @@
   // ---------- connection ----------
   function join() {
     socket.emit('join', { code, ...me }, res => {
-      if (res.error) { $('#mainCol').innerHTML = `<div class="card empty"><span class="big">🔍</span>${esc(res.error)}<br><br><a class="btn" href="/">Try another code</a></div>`; $('#evTitle').textContent = 'Not found'; return; }
+      if (res.error) { $('#mainCol').innerHTML = `<div class="card empty"><span class="big">🔍</span>${esc(res.error)}<br><br><a class="btn" href="./">Try another code</a></div>`; $('#evTitle').textContent = 'Not found'; return; }
       state = res; myRating = res.myRating;
       // the server may hand out a fresh id (e.g. an old or invalid one); others only ever see our public id
       if (res.pid && res.pid !== me.pid) { me = { ...me, pid: res.pid }; CP.saveProfile(me); }
@@ -163,7 +163,7 @@
       col.appendChild(h(`<section class="card glow center" style="padding:40px 20px">
         <div style="font-size:4rem">💜</div><h2>Thanks for the feedback!</h2>
         <p class="muted">Your review helps ${esc(ev.presenter || 'the presenter')} get even better.</p>
-        ${ev.settings.publicReport ? `<a class="btn primary" href="/report/${code}">📊 See the session report</a>` : '<p class="dim" style="font-size:.85rem">The presenter may share the full report later.</p>'}
+        ${ev.settings.publicReport ? `<a class="btn primary" href="${CP.page('report.html', { code })}">📊 See the session report</a>` : '<p class="dim" style="font-size:.85rem">The presenter may share the full report later.</p>'}
       </section>`));
       return;
     }
@@ -213,7 +213,9 @@
   socket.on('chat-delete', id => { state.messages = state.messages.filter(m => m.id !== id); $(`#chat [data-id="${id}"]`)?.remove(); });
   socket.on('pinned', setPinned);
   let typT;
-  socket.on('typing', ({ name }) => { $('#typing').textContent = `${name} is typing…`; clearTimeout(typT); typT = setTimeout(() => ($('#typing').textContent = ''), 2000); });
+  socket.on('typing', ({ name, pid }) => {
+    if (pid === myPub) return; // our own typing comes back on the channel too
+    $('#typing').textContent = `${name} is typing…`; clearTimeout(typT); typT = setTimeout(() => ($('#typing').textContent = ''), 2000); });
   let lastTyping = 0;
   $('#chatIn').addEventListener('input', () => { if (Date.now() - lastTyping > 1500) { lastTyping = Date.now(); socket.emit('typing'); } });
   $('#chatForm').addEventListener('submit', e => {

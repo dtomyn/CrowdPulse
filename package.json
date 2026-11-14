@@ -1,26 +1,30 @@
 {
   "name": "crowdpulse",
   "version": "1.0.0",
-  "description": "CrowdPulse - live audience rating, chat, Q&A, polls and post-session analytics",
+  "description": "CrowdPulse - live audience rating, chat, Q&A, polls and post-session analytics (static site + Supabase)",
   "repository": {
     "type": "git",
     "url": "https://github.com/dtomyn/CrowdPulse.git"
   },
-  "main": "server.js",
   "type": "commonjs",
   "scripts": {
-    "start": "node server.js",
-    "secure": "node server.js --https",
-    "dev": "node --watch server.js",
-    "dev:secure": "node --watch server.js --https"
+    "dev": "node scripts/dev.mjs",
+    "dev:local": "node scripts/dev.mjs --local",
+    "build": "node scripts/build.mjs",
+    "db:start": "supabase start",
+    "db:reset": "supabase db reset"
   },
   "license": "MIT",
   "dependencies": {
     "@mediapipe/tasks-vision": "0.10.14",
+    "@supabase/supabase-js": "^2.119.0",
     "chart.js": "^4.6.1",
-    "express": "^4.22.3",
-    "qrcode": "^1.5.4",
-    "selfsigned": "^5.5.0",
-    "socket.io": "^4.8.4"
+    "qrcode-generator": "^2.0.4"
+  },
+  "devDependencies": {
+    "supabase": "3.1.0"
+  },
+  "engines": {
+    "node": ">=20"
   }
 }

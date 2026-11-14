@@ -9,8 +9,7 @@
 
   "postCreateCommand": "sudo chown node node_modules && npm ci",
 
-  // VS Code forwards these through its own tunnel, so requests reach the app from loopback
-  // and the host dashboard at http://localhost:3000/admin works without ADMIN_PIN.
+  // The dev server (npm run dev) serves the pages at http://localhost:3000.
   "forwardPorts": [3000],
   "portsAttributes": {
     "3000": { "label": "CrowdPulse", "onAutoForward": "openBrowser" }

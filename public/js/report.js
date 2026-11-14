@@ -2,16 +2,16 @@
 (async function () {
   const { $, $$, esc } = CP;
   const code = CP.codeFromPath();
-  const key = new URLSearchParams(location.search).get('key') || CP.store.get('cp.keys', {})[code];
   CP.backdrop({ intensity: .22 });
   $('#brand').outerHTML = CP.brand;
 
-  const r = await fetch(`/api/events/${code}/report`, { headers: key ? { 'x-admin-key': key } : {} });
-  const R = await r.json();
+  let r, R;
+  try { r = await CP.report(code); R = await r.json(); } catch (e) { r = { ok: false }; R = { error: 'Could not load the report: ' + e.message }; }
   if (!r.ok) { $('#root').innerHTML = `<div class="card empty" style="max-width:520px;margin:15vh auto"><span class="big">🔒</span>${esc(R.error)}</div>`; return; }
-  if (key) {
-    $('#csv').href = `/api/events/${code}/export.csv?key=${key}`; $('#csv').classList.remove('hidden');
-    $('#back').href = `/admin/${code}?key=${key}`; $('#back').classList.remove('hidden');
+  // hosts get the raw-data export and a way back to the control room
+  if ((await CP.call('cp_report_access', { _c: code }))?.admin) {
+    $('#csv').href = '#'; $('#csv').onclick = e => { e.preventDefault(); CP.downloadCsv(code); }; $('#csv').classList.remove('hidden');
+    $('#back').href = CP.adminUrl(code); $('#back').classList.remove('hidden');
   }
   $('#print').onclick = () => print();
   $('#json').onclick = () => {

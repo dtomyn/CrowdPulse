@@ -14,6 +14,12 @@ npm start
 - Host dashboard: http://localhost:3000/admin
 - Attendees: the QR code / join link uses your LAN IP (e.g. `http://192.168.x.x:3000/e/CODE`), so phones on the same Wi-Fi can join.
 
+### Dev container
+
+Open the folder in VS Code and choose **Dev Containers: Reopen in Container**. It installs Node 24 and the dependencies, and forwards port 3000. Run `npm run dev` in the container's terminal and open http://localhost:3000/admin.
+
+Inside a container, CrowdPulse sees the container's own address, not your laptop's, so QR codes point somewhere phones can't reach. To test with phones, set `PUBLIC_URL` to your laptop's address (e.g. `PUBLIC_URL=http://192.168.x.x:3000 npm run dev`) and set VS Code's `remote.localPortHost` to `allInterfaces` so the forwarded port is reachable from your Wi-Fi.
+
 ### HTTPS (needed for phone cameras)
 
 Phones only let a page use the camera over `https`. To turn it on, start CrowdPulse with:

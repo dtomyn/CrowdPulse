@@ -1,0 +1,27 @@
+{
+  "name": "CrowdPulse",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:5-24-trixie",
+
+  // Keep node_modules inside the container so Windows/macOS hosts don't share native builds with Linux.
+  "mounts": [
+    "source=crowdpulse-node_modules,target=${containerWorkspaceFolder}/node_modules,type=volume"
+  ],
+
+  "postCreateCommand": "sudo chown node node_modules && npm ci",
+
+  // The dev server (npm run dev) serves the pages at http://localhost:3000.
+  "forwardPorts": [3000],
+  "portsAttributes": {
+    "3000": { "label": "CrowdPulse", "onAutoForward": "openBrowser" }
+  },
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "files.eol": "\n"
+      }
+    }
+  },
+
+  "remoteUser": "node"
+}

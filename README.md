@@ -82,6 +82,12 @@ npm run dev:local
 
 `db:start` creates the database from `supabase/migrations/`, and `dev:local` points the pages at it. Add a host with the SQL above in the local Studio (http://127.0.0.1:54323). Sign-in emails don't leave your computer: open them in Mailpit at http://127.0.0.1:54324. `npm run db:reset` starts the local database over.
 
+### Dev container
+
+Open the folder in VS Code and choose **Dev Containers: Reopen in Container**. It installs Node 24 and the dependencies, and forwards port 3000. Run `npm run dev` in the container's terminal and open http://localhost:3000.
+
+The container talks to the Supabase project in `public/js/config.js`. The local Supabase stack (`npm run db:start`) needs Docker, which isn't available inside the container, so run that one on your computer instead. Join links and QR codes point at the address in your browser (`localhost`), which phones can't reach. To test with phones, use the published site.
+
 ## How it's secured
 
 - **Everyone has a session.** Attendees are signed in anonymously in the background, so each phone has its own identity without an account. Hosts sign in by email, and only addresses in `public.hosts` can create sessions.

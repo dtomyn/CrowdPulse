@@ -24,8 +24,16 @@ $('#signinForm').addEventListener('submit', async e => {
   const btn = e.target.querySelector('button'); btn.disabled = true;
   const { error } = await CP.sb.auth.signInWithOtp({ email, options: { emailRedirectTo: CP.page('admin.html') } });
   btn.disabled = false;
-  $('#signinNote').textContent = error ? '⚠️ ' + error.message : `📬 Check ${email} for a sign-in link, and open it in this browser.`;
+  $('#signinNote').textContent = error ? '⚠️ ' + signinErrorText(error) : `📬 Check ${email} for a sign-in link, and open it in this browser.`;
 });
+// Supabase's raw rate-limit messages aren't much help to a host, so say what to do instead.
+function signinErrorText(error) {
+  const wait = /after (\d+) seconds?/i.exec(error.message || '');
+  if (wait) return `A link was just sent to this address. Wait ${wait[1]} seconds before asking for another.`;
+  if (error.code === 'over_email_send_rate_limit' || error.status === 429 || /rate limit/i.test(error.message || ''))
+    return 'Too many sign-in emails were sent recently. Try again in a little while, or use a link you were already sent.';
+  return error.message;
+}
 
 // default date: next half hour
 const d = new Date(); d.setMinutes(d.getMinutes() < 30 ? 30 : 60, 0, 0);

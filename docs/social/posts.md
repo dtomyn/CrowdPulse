@@ -16,9 +16,44 @@ The sources are in `src/`. To re-render them, run CrowdPulse on port 3055 and sc
 
 ## LinkedIn
 
-> 11 years ago, three of us built an app at a hackathon. This weekend I built it again. 🙃
+I rebuilt an app three of us made at a hackathon 11 years ago. It lets a room rate your talk while you're still giving it. This time it has nine ways to vote, including tilting your phone.
 
-I've been trying out different "software factory" approaches lately, and the hardest part is picking something worth building. While I was brainstorming, a memory surfaced: the PDC Hackathon, over 11 years ago, where Joe Hebert, Tom Yarnton and I built a "Social Evaluation™" app. The pitch: let an audience rate a talk *while it's happening*, so the presenter gets honest feedback in real time, not three weeks later in a survey nobody fills out.
+See it in action: https://youtu.be/wk60oe0w6Aw?si=5E_EMmn0PxNaR065
+
+How it came about:
+
+I've been trying out different "software factory" approaches lately, mostly on evenings and weekends, and the hardest part is picking something worth building. Then a memory surfaced: back in 2015, my company at the time, Solvera (since bought by Accenture), ran a Professional Development Conference (PDC) Hackathon, where Joseph Herbert, Tom Yarnton and I built a "Social Evaluation™" app.
+
+The pitch: let the audience rate a talk while it's happening, so the presenter gets honest feedback in real time instead of a survey three weeks later that nobody fills out.
+
+So I rebuilt it with Claude. The source on Bitbucket is long gone, but Tom dug out the original deck. The 2015 version was a yellow smiley you dragged from frown to grin, a live chat, and a gyroscope mode: tilt your phone and the smiley follows. Azure, Bootstrap 3, SignalR, Firebase. Glorious. Tom and I swapped ideas for v2, and some of them made it in.
+
+Meet CrowdPulse, the "11 years later" edition:
+
+- Live crowd mood, chat, Q&A, polls and emoji reaction storms
+- A presenter coach that warns you when the room is drifting
+- A post-show report with a letter grade, key moments and a word cloud
+- A bot audience for rehearsing (very supportive, suspiciously so)
+- Nine ways to rate: slider, smileys, stars, dial, weather, thermometer, thumbs, vibes and tilt. The gyroscope checkbox finally grew up.
+
+Same idea, more flair, more ways to tell a presenter how you really feel.
+
+Thanks, Claude, for turning a nostalgia trip into a weekend I'll remember. Tom, thanks for the deck and the ideas. Joe, the room still has opinions. 😄
+
+#Hackathon #SideProject #AI #ClaudeCode #DeveloperExperience
+
+**Links:** the video link is in the body because you asked for it there. LinkedIn tends to show posts with links to fewer people, so if reach matters more, move it to a first comment along with the code link:
+> Code (open source, runs on your laptop): https://github.com/dtomyn/LocalCrowdRating
+
+---
+
+## LinkedIn, alternative: "what would you bring back?"
+
+Same story, different ending. This version asks readers about their own decade-old projects, so it tends to get comments rather than just likes. Use one or the other, not both.
+
+> Everyone has a project from a decade ago they still think about. Mine had a smiley face. 🙃
+
+I've been trying out different "software factory" approaches lately, and the hardest part is picking something worth building. While I was brainstorming, a memory surfaced: the PDC Hackathon, over 11 years ago, where Joe Herbert, Tom Yarnton and I built a "Social Evaluation™" app. The pitch: let an audience rate a talk *while it's happening*, so the presenter gets honest feedback in real time, not three weeks later in a survey nobody fills out.
 
 So I made that my test project and built an initial version with Claude as my pair programmer. Then my good friend Tom dug out the original presentation deck and sent it over. It had a yellow smiley that went from frown to grin, a slider, a chat box and a checkbox that said "Use Gyroscope". It ran on Azure, Bootstrap 3, SignalR and Firebase, and it was glorious. We talked through what v2 should have, and a few of those ideas made it in.
 
@@ -30,17 +65,15 @@ Meet **CrowdPulse**, the "11 years later" v2 ✨
 🤖 A bot audience simulator for rehearsing (they're very supportive)
 🎚️ And **nine** ways to rate: slider, smileys, stars, rotary dial, weather, thermometer, thumbs, vibes and… 📱 *tilt*. The 2015 gyroscope checkbox finally grew up.
 
-Same idea. More ideas. More flair. More ways to tell a presenter how you *really* feel.
+The idea aged better than the stack. That seems to be the pattern: the thing you were excited about ten years ago was usually a good idea that was just expensive to build at the time.
 
 Thank you, Claude, for turning a nostalgia trip into a weekend I'll remember. Tom, thanks for the deck and the ideas. Joe, the room still has opinions. 😄
 
-How would *you* rate this post? (A slider is fine. A thermometer is better.)
+**Now your turn.** 👇 What did you build, pitch or sketch a decade ago that deserves a second life? A hackathon app, a side project, a "someday" idea on a whiteboard, a tool your team used and lost. Have you brought one back recently? Tell me what it was, and what changed when you rebuilt it. I'd love to see the then-vs-now.
 
 #Hackathon #SideProject #AI #ClaudeCode #DeveloperExperience
 
-**First comment** (LinkedIn shows posts with links in the body to fewer people, so put the links in a comment):
-> 🎬 2-minute walkthrough: https://youtu.be/JNMJ8OB89lg
-> 💻 Code (open source, runs on your laptop): https://github.com/dtomyn/CrowdPulse
+**Links:** same as the main post above.
 
 ---
 
@@ -57,7 +90,7 @@ How would *you* rate this post? (A slider is fine. A thermometer is better.)
 
 ### Share post (to go with the article)
 
-> 11 years ago, Joe Hebert, Tom Yarnton and I built an app at a hackathon that let an audience rate a talk while it was happening. It had one smiley, one slider and a "Use Gyroscope" checkbox. 😄
+> 11 years ago, Joe Herbert, Tom Yarnton and I built an app at a hackathon that let an audience rate a talk while it was happening. It had one smiley, one slider and a "Use Gyroscope" checkbox. 😄
 >
 > While trying out "software factory" approaches with Claude, I built it again. Then Tom sent me the original deck, we talked through what v2 should have, and it now has nine ways to rate, including tilting your phone. 📱
 >
@@ -71,7 +104,7 @@ How would *you* rate this post? (A slider is fine. A thermometer is better.)
 
 **Title:** 11 years later, the room still has opinions 🎤📈
 
-Throwback time! 🕰️ I've been trying out different "software factory" approaches lately, and while I was hunting for something worth building, a memory surfaced: the PDC Hackathon, over 11 years ago, where Joe Hebert, Tom Yarnton and I built a "Social Evaluation™" app. The idea was simple: the audience rates a session *as it happens*, so presenters get feedback they can actually use, during the talk and after it.
+Throwback time! 🕰️ I've been trying out different "software factory" approaches lately, and while I was hunting for something worth building, a memory surfaced: the PDC Hackathon, over 11 years ago, where Joe Herbert, Tom Yarnton and I built a "Social Evaluation™" app. The idea was simple: the audience rates a session *as it happens*, so presenters get feedback they can actually use, during the talk and after it.
 
 So I made it my test project and built a first version with Claude. Then my good friend Tom dug out the original presentation deck and sent it over. Our pitch slide said, word for word, "Everyone has an opinion and want to express it." Grammar optional, enthusiasm mandatory. We talked through what v2 should have, and the result is **CrowdPulse**, with a lot more flair:
 
@@ -100,7 +133,7 @@ Huge thanks to Claude for the pair programming, to Tom for the deck and the v2 i
 ---
 
 ## Before you post
-- **Tag people:** @-mention Joe Hebert and Tom Yarnton if they're on LinkedIn or in your Viva Engage network.
-- **Event name:** PDC is the name on the slides. If your network knew it by another name, use that instead.
+- **Tag people:** @-mention Joe Herbert and Tom Yarnton if they're on LinkedIn or in your Viva Engage network.
+- **Event name:** PDC is Solvera's Professional Development Conference. The main LinkedIn post spells it out; the other posts just say PDC.
 - **Viva Engage poll:** make the four options a real poll (Viva Engage has a Poll post type) and paste the rest as the post text.
 - **Screenshots:** the session on the phone is titled "PDC Session – Hackathon Presentation", the same title as the 2015 demo. Its audience is the app's bot simulator, not real people.

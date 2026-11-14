@@ -20,6 +20,7 @@ Everything Supabase needs is in `supabase/`: the database, its security rules an
    - *Sign In / Providers*: turn on **Allow anonymous sign-ins** (attendees join without an account) and keep **Email** on (hosts sign in with a link).
    - *URL Configuration*: set the **Site URL** to the published site (for example `https://<you>.github.io/CrowdPulse/`) and add these **Redirect URLs**: `https://<you>.github.io/CrowdPulse/**` and `http://localhost:3000/**`.
    - *Rate Limits*: raise **anonymous sign-ins per hour** (default 30 per IP address) to more than your biggest audience, for example 1000. Everyone on a venue's Wi-Fi usually shares one IP address, so the default would turn people away after the 30th phone.
+   - *Emails → SMTP Settings*: set up your own email provider (Resend, Postmark, SendGrid, Amazon SES and so on). Supabase's built-in email service sends only **2 emails per hour for the whole project**, and every host sign-in link counts. Once the limit is reached, hosts see "Too many sign-in emails were sent recently". With custom SMTP set up, raise **Rate limit for sending emails** under *Rate Limits* (for example to 30 per hour). Separately, each address must wait 60 seconds between links.
 3. **Create the database and the report function.** You'll need the database password from when you created the project:
 
    ```bash
@@ -47,12 +48,27 @@ Everything Supabase needs is in `supabase/`: the database, its security rules an
 
 ## Publish on GitHub Pages
 
-In the repository's **Settings → Pages**, set **Source** to **GitHub Actions**. Every push to `main` then builds the site (`npm run build`) and publishes it with `.github/workflows/pages.yml`, at `https://<you>.github.io/CrowdPulse/`. On the free GitHub plan, Pages needs a public repository.
+In the repository's **Settings → Pages**, set **Source** to **GitHub Actions**. Every push to `main` then builds the site (`npm run build`) and publishes it with `.github/workflows/pages.yml`, at `https://<you>.github.io/CrowdPulse/`. You can also run the workflow by hand from the **Actions** tab. On the free GitHub plan, Pages needs a public repository.
 
 Then:
 
 - **Hosts** open `admin.html` (the 🎤 Host dashboard link on the home page) and sign in with their email.
 - **Attendees** scan the QR code or type the code on the home page. Pages always uses https, so phone cameras work without any certificate setup.
+
+## Deploying changes
+
+The site and Supabase are deployed separately. Pushing to `main` updates only the pages.
+
+| What changed | How to deploy it |
+|---|---|
+| `public/`, `scripts/` or dependencies | Merge or push to `main`. The Pages workflow builds and publishes the site in a minute or two. |
+| `supabase/migrations/` | `npx supabase db push --remote` (needs the database password) |
+| `supabase/functions/report/` or `supabase/functions/_shared/` | `npx supabase functions deploy report` |
+| Sign-in, email and rate-limit settings | The Supabase dashboard (Authentication). `supabase/config.toml` configures only the local stack. |
+
+If a change touches both the database and the pages, push the migration first, so the published pages never call a function the database doesn't have yet.
+
+To build the site for a different Supabase project, set `SUPABASE_URL` and `SUPABASE_KEY` (its publishable key) when running `npm run build` or `npm run dev`. Without them, the pages use `public/js/config.js`.
 
 ## Run it locally
 
@@ -133,7 +149,7 @@ The container talks to the Supabase project in `public/js/config.js`. The local 
 - CSV export, reset
 - 🔑 Co-host link: lets someone else run the session from their own device
 
-**Stage view** (`stage.html?code=CODE`): projector-friendly, with a giant QR code lobby, live gauge, chat ticker, poll overlay, spotlighted questions and reactions.
+**Stage view** (`stage.html?code=CODE`): projector-friendly, with a giant QR code lobby, live gauge, chat ticker, poll overlay, spotlighted questions and reactions. Before and after the session, press **Esc** or **✕** to hide the lobby or "That's a wrap" screen and see the dashboard behind it. Press Esc again to bring it back.
 
 **Report** (`report.html?code=CODE`)
 - Animated letter grade and overall score

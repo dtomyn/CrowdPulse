@@ -31,14 +31,14 @@ Everything Supabase needs is in `supabase/`: the database, its security rules an
    ```
 
    ```bash
-   npx supabase db push
+   npx supabase db push --remote
    ```
 
    ```bash
    npx supabase functions deploy report
    ```
 
-   The project ref is the part of the Project URL before `.supabase.co`. Run `db push` again whenever `supabase/migrations/` changes, and `functions deploy report` whenever the report function changes.
+   The project ref is the part of the Project URL before `.supabase.co`. Without `--remote`, `db push` goes to the local Docker database (the CLI's default). Run `db push --remote` again whenever `supabase/migrations/` changes, and `functions deploy report` whenever the report function changes.
 4. **Say who can host.** Only email addresses on the host list can create sessions. Add yours in the dashboard's SQL Editor:
 
    ```sql

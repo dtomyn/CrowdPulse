@@ -1,0 +1,31 @@
+TITLE
+Ask Your Codebase a Question, Then Watch the Answer | Ask CrowdPulse
+
+ALTERNATIVE TITLES
+Animated Answers About Your Code, Checked Against the Code | Ask CrowdPulse
+What If Code Questions Were Answered With an Animation? (Claude Code + a Fixed Map)
+
+DESCRIPTION
+"How does a rating get from a phone to the big screen?"
+
+Ask CrowdPulse is a small local tool for questions like that. You ask in plain language, and it answers with a short text and an animation that plays on a map of the app's parts. Every step of the animation quotes a line of the real code, and the quote is looked up in the file before the step is shown.
+
+In this film:
+• Asking a question and watching the answer stream in (a recorded run, replayed at its real speed)
+• Why the answers can be trusted: quotes are checked, steps between unconnected parts are dropped, invented quotes are flagged
+• How it works: a fixed map, Claude Code running read-only in the repository, and one line of JSON per step
+• One question answered for three audiences: developer, architect and product owner
+• Prepared examples that double as tests, so the explanations can't quietly go stale
+
+Every answer shown is a real one. The two "planted mistakes" are added on purpose and labelled on screen.
+
+Chapters
+0:00 Intro
+0:16 Asking a question
+1:01 Why you can trust it
+1:50 How it works
+2:23 One question, three audiences
+2:46 Answers that can’t go stale
+3:08 Outro
+
+Try it: npm run ask, then open http://localhost:3100 (see ask/README.md).

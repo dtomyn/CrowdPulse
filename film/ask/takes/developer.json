@@ -1,0 +1,108 @@
+{
+  "question": "How does a rating get from a phone to the big screen?",
+  "audience": "developer",
+  "recordedAt": "2026-11-15T15:16:05.016Z",
+  "model": "sonnet",
+  "commit": "fdbfac9",
+  "answer": "On the phone, event.js's sendRating(v) calls socket.emit('rate'), which supa.js turns into the cp_act database function. cp_act runs cp_do_rate, which writes to the ratings table. The 2-second cp_tick then computes the pulse and broadcasts it on the ev:CODE channel. The stage page receives it through socket.on('pulse', onPulse) and draws the gauge.",
+  "answerAt": 4111,
+  "steps": [
+    {
+      "at": "event",
+      "caption": "sendRating emits a 'rate' event carrying the value and mode.",
+      "cite": {
+        "file": "public/js/event.js",
+        "line": 112,
+        "quote": "socket.emit('rate', { v: pending, mode }); sendT = null;"
+      }
+    },
+    {
+      "from": "event",
+      "to": "supa",
+      "payload": "rate {v, mode}",
+      "caption": "supa.js maps any other event name onto the cp_act database function, with the event name as _action.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "line": 145,
+        "quote": "else res = await CP.call('cp_act', { _c: code, _action: name, _p: p === undefined ? null : p });"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "api",
+      "payload": "cp_act('rate')",
+      "caption": "cp_act routes the 'rate' action to cp_do_rate.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "line": 700,
+        "quote": "when 'rate' then perform public.cp_do_rate(e, me, _p -> 'v', _p -> 'mode');"
+      }
+    },
+    {
+      "from": "api",
+      "to": "tables",
+      "payload": "ratings row",
+      "caption": "cp_do_rate inserts the rating into the ratings table.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "line": 428,
+        "quote": "insert into public.ratings (code, pid, v, mode, t) values (e.code, _pid, val, md, n) returning id into rid;"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "pulse",
+      "payload": "cp_tick",
+      "caption": "The stage page runs with ticker 'always', so it calls cp_tick every 2 seconds.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "line": 126,
+        "quote": "if (ticker === 'always') { tick(); timers.push(setInterval(tick, 2000)); }"
+      }
+    },
+    {
+      "from": "pulse",
+      "to": "realtime",
+      "payload": "pulse {avg, n}",
+      "caption": "cp_tick aggregates the ratings and broadcasts the result as a 'pulse' event on ev:CODE.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "line": 653,
+        "quote": "perform public.cp_send('ev:' || _c, 'pulse', pulse || jsonb_build_object('reacts', reacts));"
+      }
+    },
+    {
+      "from": "realtime",
+      "to": "supa",
+      "payload": "pulse broadcast",
+      "caption": "The stage client listens on the private channel. Its socket.on('pulse', onPulse) handler fires when a broadcast arrives.",
+      "cite": {
+        "file": "public/js/stage.js",
+        "line": 82,
+        "quote": "socket.on('pulse', onPulse);"
+      }
+    },
+    {
+      "from": "stage",
+      "to": "common",
+      "payload": "avg value",
+      "caption": "stage.js onPulse hands the new value to the shared big gauge drawn by CP.gauge.",
+      "cite": {
+        "file": "public/js/common.js",
+        "line": 153,
+        "quote": "CP.gauge = (host, { big = false } = {}) => {"
+      }
+    }
+  ],
+  "stepAt": [
+    4492,
+    5328,
+    6122,
+    6519,
+    7367,
+    8176,
+    8585,
+    13606
+  ],
+  "doneAt": 13607
+}

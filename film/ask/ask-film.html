@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Ask CrowdPulse Film Director</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap');
+  html, body { margin: 0; width: 1600px; height: 900px; overflow: clip; background: #05030f; color: #fff; font-family: Inter, "Segoe UI", sans-serif; }
+  #stage { position: relative; width: 1600px; height: 900px; overflow: clip; }
+  #cam { position: absolute; left: 0; top: 0; width: 1600px; height: 900px; transform-origin: 0 0; will-change: transform; }
+
+  /* set backdrop (same as the other films) */
+  #bg { position: absolute; inset: -500px; background: radial-gradient(1200px 700px at 30% 20%, #1a1150 0%, transparent 60%), radial-gradient(900px 600px at 80% 80%, #0d3a4a 0%, transparent 60%), #07051a; }
+  #bg .blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; }
+  #bg .b1 { width: 700px; height: 700px; left: 400px; top: 350px; background: #7c5cff; animation: drift1 26s ease-in-out infinite; }
+  #bg .b2 { width: 600px; height: 600px; left: 1300px; top: 450px; background: #ff5ca8; animation: drift2 30s ease-in-out infinite; opacity: .4; }
+  #bg .b3 { width: 650px; height: 650px; left: 900px; top: 1000px; background: #2ee6d6; animation: drift1 34s ease-in-out infinite reverse; opacity: .3; }
+  #bg .grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 48px 48px; mask-image: radial-gradient(circle at 50% 50%, black, transparent 75%); }
+  @keyframes drift1 { 50% { transform: translate(160px, -90px) scale(1.15); } }
+  @keyframes drift2 { 50% { transform: translate(-200px, 80px) scale(.9); } }
+
+  /* ---------- the app windows (the real Ask CrowdPulse page in each) ---------- */
+  #world { position: absolute; inset: 0; perspective: 1900px; perspective-origin: 50% 42%; }
+  .win { position: absolute; left: 0; top: 0; transform-origin: 0 0; opacity: 0; border-radius: 16px; overflow: hidden; background: #0f0d1c;
+    box-shadow: 0 60px 140px -30px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.16), 0 0 140px -40px rgba(124,92,255,.75); transition: box-shadow .5s; }
+  .win.lit { box-shadow: 0 60px 140px -30px rgba(0,0,0,.85), 0 0 0 3px #ff7a1a, 0 0 120px -10px rgba(255,122,26,.8); }
+  .win .bar { height: 34px; display: flex; align-items: center; gap: 7px; padding: 0 14px; background: linear-gradient(#1d1745, #151036); border-bottom: 1px solid rgba(255,255,255,.08); }
+  .win .dot { width: 11px; height: 11px; border-radius: 50%; }
+  .win .url { margin-left: 14px; flex: 1; height: 22px; border-radius: 7px; background: rgba(0,0,0,.35); color: #b9b4e0; font: 500 13px/22px Inter, sans-serif; padding: 0 11px; white-space: nowrap; overflow: hidden; }
+  .win iframe { border: 0; display: block; background: #0f0d1c; }
+  .win.hero iframe { width: 1600px; height: 1000px; } .win.solo iframe { width: 1200px; height: 744px; }
+
+  /* ---------- overlays (not moved by the camera) ---------- */
+  #ov { position: absolute; inset: 0; pointer-events: none; }
+  #vignette { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(0,0,0,.45)); }
+  .ovl { position: absolute; opacity: 0; }
+
+  #bigq { left: 0; right: 0; top: 250px; text-align: center; font: 700 68px/1.15 'Space Grotesk', sans-serif; letter-spacing: -.02em; text-shadow: 0 8px 50px rgba(0,0,0,.9); padding: 0 150px; }
+  #bigq .k { display: block; font: 700 14px Inter; letter-spacing: .26em; text-transform: uppercase; color: #a7a3c9; margin-bottom: 22px; }
+  #bigq .caret { display: inline-block; width: 4px; height: 62px; margin-left: 6px; background: #ff7a1a; vertical-align: -8px; }
+
+  #stepCard { left: 250px; right: 250px; bottom: 34px; padding: 16px 24px 15px; border-radius: 18px; background: rgba(14,10,36,.93); border: 1px solid rgba(255,122,26,.75); box-shadow: 0 24px 60px -16px rgba(0,0,0,.9), 0 0 60px -18px rgba(255,122,26,.8); }
+  #stepCard .n { font: 700 12px Inter; letter-spacing: .2em; text-transform: uppercase; color: #ffb37a; }
+  #stepCard .t { font: 600 25px/1.25 Inter; margin: 4px 0 7px; }
+  #stepCard .c { font: 500 15px/1.3 Consolas, monospace; color: #9cdcfe; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #stepCard .c b { color: #7ee0a8; font-weight: 600; margin-right: 10px; }
+
+  #chip { left: 50%; top: 22px; transform: translateX(-50%); padding: 7px 16px; border-radius: 999px; font: 700 12px Inter; letter-spacing: .16em; text-transform: uppercase; background: rgba(12,8,36,.9); border: 1px solid rgba(255,255,255,.25); white-space: nowrap; }
+  #chip::before { content: '●'; color: #ff5ca8; margin-right: 8px; }
+
+  #menu { width: 190px; border-radius: 10px; overflow: hidden; background: #1a1730; border: 1px solid #4a4570; box-shadow: 0 20px 50px -10px rgba(0,0,0,.9); font: 500 15px Inter; }
+  #menu div { padding: 9px 14px; } #menu div.on { background: #6d4aff; }
+
+  /* the code panel: the real file, scrolled to the quoted line */
+  #lens { width: 690px; border-radius: 14px; overflow: hidden; background: #1e1e1e; box-shadow: 0 40px 100px -20px rgba(0,0,0,.95), 0 0 0 1px rgba(255,255,255,.18), 0 0 110px -30px rgba(46,230,214,.7); }
+  #lens .hd { height: 40px; display: flex; align-items: center; gap: 10px; padding: 0 14px; background: #2d2d2d; font: 500 14px Inter; color: #ddd; }
+  #lens .hd .what { margin-left: auto; font: 700 11px Inter; letter-spacing: .16em; text-transform: uppercase; color: #9d98c4; }
+  #lens .hd .path { font: 500 14px Consolas, monospace; color: #9cdcfe; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 430px; }
+  #lens .view { position: relative; height: 390px; overflow: hidden; }
+  #lens .band { position: absolute; left: 0; right: 0; top: 182px; height: 26px; background: rgba(255,255,255,.07); box-shadow: inset 3px 0 0 #ffd60a; transition: background .3s, box-shadow .3s; }
+  #lens.found .band { background: rgba(46,214,130,.28); box-shadow: inset 4px 0 0 #2ed682, 0 0 40px rgba(46,214,130,.5); }
+  #lens.none .band { background: rgba(255,170,60,.18); box-shadow: inset 4px 0 0 #ffaa3c; }
+  #lens .lines { position: absolute; left: 0; top: 0; width: 100%; font: 400 16px/26px Consolas, "Courier New", monospace; color: #d4d4d4; will-change: transform; }
+  #lens .l { height: 26px; white-space: pre; overflow: hidden; }
+  #lens .l .no { display: inline-block; width: 52px; padding-right: 16px; text-align: right; color: #7a7a7a; }
+  #lens .l.hit .no { color: #2ed682; font-weight: 700; }
+  #lens .stamp { position: absolute; right: 18px; bottom: 16px; padding: 9px 18px; border-radius: 12px; font: 700 20px 'Space Grotesk', sans-serif; opacity: 0; transform: scale(1.5) rotate(-4deg); transition: opacity .25s, transform .35s cubic-bezier(.2,1.6,.4,1); }
+  #lens.found .stamp { opacity: 1; transform: rotate(-4deg); background: #0f3d27; border: 2px solid #2ed682; color: #7df0b4; }
+  #lens.none .stamp { opacity: 1; transform: rotate(-4deg); background: #40290a; border: 2px solid #ffaa3c; color: #ffcf8a; }
+  .cm { color: #6a9955; } .st { color: #ce9178; } .nu { color: #b5cea8; } .kw { color: #569cd6; } .fn { color: #dcdcaa; }
+
+  /* one line from the model, and the verdict on it */
+  #wcard { width: 640px; padding: 18px 22px 20px; border-radius: 18px; background: rgba(16,12,40,.96); border: 1px solid rgba(255,255,255,.28); box-shadow: 0 30px 80px -20px rgba(0,0,0,.95); }
+  #wcard .k { font: 700 12px Inter; letter-spacing: .2em; text-transform: uppercase; color: #a7a3c9; }
+  #wcard .route { margin: 10px 0 8px; display: flex; align-items: center; gap: 10px; font: 700 21px 'Space Grotesk', sans-serif; }
+  #wcard .route span { padding: 5px 12px; border-radius: 9px; background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2); }
+  #wcard .cap { font: 500 20px/1.3 Inter; margin-bottom: 10px; }
+  #wcard .q { font: 500 14.5px/1.4 Consolas, monospace; color: #ce9178; overflow-wrap: anywhere; }
+  #wcard .q b { color: #9d98c4; font-weight: 500; }
+  #wcard .verdict { margin-top: 14px; padding: 10px 14px; border-radius: 11px; font: 700 17px Inter; opacity: 0; transform: translateY(8px); transition: opacity .35s, transform .35s; }
+  #wcard.bad .verdict, #wcard.warn .verdict { opacity: 1; transform: none; }
+  #wcard.bad { border-color: #ff4d6a; } #wcard.bad .verdict { background: rgba(255,77,106,.16); border: 1px solid #ff4d6a; color: #ff9fb0; }
+  #wcard.warn { border-color: #ffaa3c; } #wcard.warn .verdict { background: rgba(255,170,60,.14); border: 1px solid #ffaa3c; color: #ffcf8a; }
+  #wcard.bad .cap, #wcard.bad .route { text-decoration: line-through; text-decoration-color: #ff4d6a; opacity: .7; }
+
+  #banner { left: 50%; top: 20px; transform: translateX(-50%); padding: 9px 20px; border-radius: 12px; background: rgba(64,41,10,.95); border: 1px solid #ffaa3c; color: #ffe0b0; font: 700 15px Inter; letter-spacing: .04em; white-space: nowrap; }
+
+  /* what Claude gets, and what it sends back */
+  .panel { border-radius: 16px; background: rgba(16,12,40,.95); border: 1px solid rgba(255,255,255,.2); box-shadow: 0 30px 80px -24px rgba(0,0,0,.95); overflow: hidden; }
+  .panel .hd { padding: 12px 18px 10px; font: 700 12px Inter; letter-spacing: .2em; text-transform: uppercase; color: #a7a3c9; border-bottom: 1px solid rgba(255,255,255,.1); display: flex; gap: 10px; }
+  .panel .hd b { color: #fff; margin-left: auto; letter-spacing: .04em; text-transform: none; font-size: 13px; }
+  #pin { left: 44px; top: 96px; width: 650px; height: 470px; }
+  #pin .facts { display: flex; gap: 10px; padding: 12px 18px 4px; }
+  #pin .facts div { flex: 1; padding: 9px 12px; border-radius: 11px; background: rgba(255,255,255,.07); font: 500 13px Inter; color: #cfcaf5; }
+  #pin .facts b { display: block; font: 700 26px 'Space Grotesk', sans-serif; color: #fff; }
+  #pin .scroll { position: absolute; left: 0; right: 0; top: 132px; bottom: 0; overflow: hidden; mask-image: linear-gradient(transparent, black 12%, black 85%, transparent); }
+  #pin pre { margin: 0; padding: 0 18px; font: 400 12.5px/19px Consolas, monospace; color: #b9d7c0; will-change: transform; }
+  #pout { left: 44px; top: 586px; width: 650px; height: 280px; }
+  #pout .rows { padding: 10px 16px; font: 400 13px/1.35 Consolas, monospace; color: #dcdcaa; display: flex; flex-direction: column; gap: 7px; }
+  #pout .row { padding: 6px 10px; border-radius: 8px; background: rgba(255,255,255,.06); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; transform: translateX(-14px); transition: opacity .4s, transform .5s cubic-bezier(.2,1.3,.4,1), background .6s; }
+  #pout .row.in { opacity: 1; transform: none; } #pout .row.new { background: rgba(255,122,26,.35); }
+
+  #stats { left: 740px; top: 742px; width: 816px; display: flex; gap: 14px; }
+  #stats div { flex: 1; padding: 14px 18px; border-radius: 16px; background: rgba(16,12,40,.95); border: 1px solid rgba(255,255,255,.22); font: 500 14px Inter; color: #cfcaf5; }
+  #stats b { display: block; font: 700 46px/1 'Space Grotesk', sans-serif; color: #fff; margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+  #stats b i { font-style: normal; font-size: 24px; color: #ffb37a; margin-left: 4px; }
+
+  #counts { left: 0; right: 0; bottom: 40px; display: flex; justify-content: center; gap: 16px; }
+  #counts div { padding: 12px 22px; border-radius: 16px; background: rgba(14,10,36,.93); border: 1px solid rgba(255,255,255,.25); font: 500 15px Inter; color: #cfcaf5; text-align: center; }
+  #counts b { display: block; font: 700 40px/1 'Space Grotesk', sans-serif; color: #fff; }
+
+  /* one question, three audiences */
+  .aud { top: 96px; width: 504px; text-align: center; font: 700 26px 'Space Grotesk', sans-serif; }
+  .aud small { display: block; font: 700 12px Inter; letter-spacing: .2em; text-transform: uppercase; color: #a7a3c9; margin-bottom: 2px; }
+  .cap3 { top: 510px; width: 504px; height: 250px; box-sizing: border-box; padding: 16px 20px; border-radius: 16px; background: rgba(16,12,40,.95); border: 1px solid rgba(255,255,255,.2); transition: border-color .4s, box-shadow .4s; }
+  .cap3.lit { border-color: #ff7a1a; box-shadow: 0 0 60px -16px rgba(255,122,26,.9); }
+  .cap3 .n { font: 700 11px Inter; letter-spacing: .2em; text-transform: uppercase; color: #ffb37a; }
+  .cap3 .t { font: 600 21px/1.3 Inter; margin: 6px 0 10px; }
+  .cap3 .c { font: 500 13px/1.35 Consolas, monospace; color: #9cdcfe; overflow-wrap: anywhere; }
+  #audq { left: 0; right: 0; top: 30px; text-align: center; font: 600 24px Inter; color: #e5e1ff; }
+  #audq b { font-family: 'Space Grotesk', sans-serif; }
+
+  /* six examples, six tests */
+  #wallTitle { left: 0; right: 0; top: 28px; text-align: center; font: 700 44px 'Space Grotesk', sans-serif; letter-spacing: -.02em; }
+  #wallTitle span { background: linear-gradient(120deg, #7c5cff, #ff5ca8 55%, #ffb547); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .mlab { width: 498px; text-align: center; font: 600 14.5px/1.25 Inter; color: #dcd8ff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  #term { left: 330px; top: 150px; width: 940px; height: 600px; border-radius: 14px; overflow: hidden; background: #0c0c12; box-shadow: 0 50px 120px -20px rgba(0,0,0,.95), 0 0 0 1px rgba(255,255,255,.2), 0 0 120px -30px rgba(46,214,130,.6); }
+  #term .hd { height: 36px; display: flex; align-items: center; gap: 7px; padding: 0 14px; background: #1f1f2b; font: 500 13px Inter; color: #aaa; }
+  #term .hd .dot { width: 11px; height: 11px; border-radius: 50%; } #term .hd span { margin-left: 10px; }
+  #term .body { position: absolute; left: 0; right: 0; top: 36px; bottom: 0; overflow: hidden; }
+  #term pre { position: absolute; left: 0; right: 0; bottom: 0; margin: 0; padding: 14px 20px; font: 400 15.5px/23px Consolas, monospace; color: #d0d0d8; white-space: pre; }
+  #term .ok { color: #2ed682; } #term .su { color: #9cdcfe; } #term .pr { color: #ffb37a; } #term .hot { background: rgba(255,214,10,.22); color: #fff; }
+  #term .sum { color: #7df0b4; font-weight: 700; }
+
+  #words { left: 0; right: 0; top: 250px; text-align: center; font: 700 86px/1.12 'Space Grotesk', sans-serif; letter-spacing: -.03em; text-shadow: 0 10px 60px rgba(0,0,0,.95); }
+  #words div { opacity: 0; transform: translateY(30px) scale(.96); transition: opacity .6s, transform .8s cubic-bezier(.2,1.3,.4,1); }
+  #words div.in { opacity: 1; transform: none; }
+  #words div:nth-child(1) { color: #b9a8ff; } #words div:nth-child(2) { color: #ff9a55; } #words div:nth-child(3) { color: #7df0b4; }
+
+  #chapter { position: absolute; left: 64px; bottom: 56px; display: flex; align-items: flex-end; gap: 22px; opacity: 0; }
+  #chapter::before { content: ''; position: absolute; left: -90px; right: -140px; top: -70px; bottom: -70px; z-index: -1; background: radial-gradient(closest-side, rgba(5,3,15,.95), rgba(5,3,15,.8) 60%, transparent); filter: blur(6px); }
+  #chapter .num { font: 700 92px/0.8 'Space Grotesk', sans-serif; background: linear-gradient(120deg, #7c5cff, #ff5ca8 55%, #ffb547); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  #chapter .txt { padding-bottom: 4px; }
+  #chapter .k { font: 700 13px Inter, sans-serif; letter-spacing: .24em; text-transform: uppercase; color: #a7a3c9; }
+  #chapter .t { font: 700 40px/1.1 'Space Grotesk', sans-serif; letter-spacing: -.02em; color: #fff; text-shadow: 0 6px 30px rgba(0,0,0,.6); }
+  #chapter .rule { position: absolute; left: 0; right: 0; bottom: -14px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, #7c5cff, #ff5ca8, transparent); transform-origin: 0 0; }
+  #cursor { position: absolute; left: 0; top: 0; width: 34px; height: 34px; opacity: 0; filter: drop-shadow(0 6px 10px rgba(0,0,0,.6)); }
+  .ripple { position: absolute; width: 70px; height: 70px; margin: -35px 0 0 -35px; border-radius: 50%; border: 3px solid rgba(255,255,255,.9); animation: rip .55s ease-out forwards; }
+  @keyframes rip { from { transform: scale(.2); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
+  #title { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; opacity: 0; background: radial-gradient(circle at 50% 45%, rgba(30,20,80,.92), rgba(5,3,15,.99) 70%); }
+  #title .mark { width: 120px; height: 120px; border-radius: 36px; margin: 0 auto 30px; display: grid; place-items: center; background: linear-gradient(120deg, #7c5cff, #ff5ca8 55%, #ffb547); box-shadow: 0 0 90px -10px #ff5ca8; }
+  #title .mark svg { width: 70px; height: 70px; }
+  #title h1 { font: 700 112px/1 'Space Grotesk', sans-serif; letter-spacing: -.04em; margin: 0; }
+  #title p { font: 500 32px Inter, sans-serif; color: #c9c4f0; margin: 22px 0 0; }
+  #title .cmd { display: inline-block; margin-top: 34px; font: 600 26px ui-monospace, Consolas, monospace; padding: 16px 28px; border-radius: 16px; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.2); color: #fff; }
+  #title .cmd b { color: #2ee6d6; }
+  #title .line { opacity: 0; transform: translateY(26px); transition: opacity .8s, transform 1s cubic-bezier(.2,1.2,.4,1); }
+  #title.in .line { opacity: 1; transform: none; }
+  #title .l2 { transition-delay: .25s; } #title .l3 { transition-delay: .5s; } #title .l4 { transition-delay: .8s; }
+  #flash { position: absolute; inset: 0; background: white; opacity: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="cam">
+    <div id="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="grid"></div></div>
+    <div id="world"></div>
+  </div>
+  <div id="ov">
+    <div id="vignette"></div>
+    <div class="ovl" id="bigq"></div>
+    <div class="ovl" id="chip"></div>
+    <div class="ovl" id="banner"></div>
+    <div class="ovl" id="stepCard"><div class="n"></div><div class="t"></div><div class="c"></div></div>
+    <div class="ovl" id="menu"><div class="on">Developer</div><div>Architect</div><div>Product owner</div></div>
+    <div class="ovl panel" id="pin"><div class="hd">What Claude is given<b id="pinSize"></b></div><div class="facts" id="pinFacts"></div><div class="scroll"><pre id="pinPre"></pre></div></div>
+    <div class="ovl panel" id="pout"><div class="hd">What Claude sends back<b>one step per line</b></div><div class="rows" id="poutRows"></div></div>
+    <div class="ovl" id="stats"></div>
+    <div class="ovl" id="counts"></div>
+    <div class="ovl" id="audq"></div>
+    <div class="ovl aud" id="aud0"></div><div class="ovl aud" id="aud1"></div><div class="ovl aud" id="aud2"></div>
+    <div class="ovl cap3" id="cap0"></div><div class="ovl cap3" id="cap1"></div><div class="ovl cap3" id="cap2"></div>
+    <div class="ovl" id="wallTitle"></div>
+    <div class="ovl mlab" id="ml0"></div><div class="ovl mlab" id="ml1"></div><div class="ovl mlab" id="ml2"></div><div class="ovl mlab" id="ml3"></div><div class="ovl mlab" id="ml4"></div><div class="ovl mlab" id="ml5"></div>
+    <div class="ovl" id="wcard"><div class="k"></div><div class="route"></div><div class="cap"></div><div class="q"></div><div class="verdict"></div></div>
+    <div class="ovl" id="lens"><div class="hd"><span class="path"></span><span class="what"></span></div><div class="view"><div class="band"></div><div class="lines"></div><div class="stamp"></div></div></div>
+    <div class="ovl" id="term"><div class="hd"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span>Terminal — CrowdPulse</span></div><div class="body"><pre id="termPre"></pre></div></div>
+    <div class="ovl" id="words"><div>Ask a question.</div><div>Watch the answer.</div><div>Check the line.</div></div>
+    <div id="chapter"><div class="num"></div><div class="txt"><div class="k"></div><div class="t"></div></div><div class="rule"></div></div>
+    <div id="title"></div>
+    <svg id="cursor" viewBox="0 0 24 24"><path d="M4 2.5l15 8.6-6.6 1.6 3.8 7.1-2.7 1.4-3.8-7.1L4.6 18.6z" fill="#fff" stroke="#0b0820" stroke-width="1.4" stroke-linejoin="round"/></svg>
+    <div id="flash"></div>
+  </div>
+</div>
+<script src="/studio/ask-film.js"></script>
+</body>
+</html>

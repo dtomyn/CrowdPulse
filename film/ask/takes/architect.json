@@ -1,0 +1,98 @@
+{
+  "question": "How does a rating get from a phone to the big screen?",
+  "audience": "architect",
+  "recordedAt": "2026-11-15T15:16:18.662Z",
+  "model": "sonnet",
+  "commit": "fdbfac9",
+  "answer": "The phone never talks to the stage directly. It calls a security-definer database function (cp_act) through the thin supa.js wrapper, which writes the rating to Postgres. Rating aggregation happens server-side in cp_tick, which broadcasts the pulse on a private Realtime channel that the stage only listens to. Trust sits in the database: browsers get RPC and listen-only access, and the tables are closed to them.",
+  "answerAt": 3397,
+  "steps": [
+    {
+      "from": "event",
+      "to": "supa",
+      "payload": "rate {v, mode}",
+      "caption": "The phone's rater emits a 'rate' event on the socket-shaped wrapper.",
+      "cite": {
+        "file": "public/js/event.js",
+        "line": 112,
+        "quote": "socket.emit('rate', { v: pending, mode })"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "api",
+      "payload": "cp_act('rate')",
+      "caption": "supa.js turns any non-special emit into a cp_act RPC, the only entry point the browser may call.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "line": 145,
+        "quote": "else res = await CP.call('cp_act', { _c: code, _action: name, _p: p === undefined ? null : p });"
+      }
+    },
+    {
+      "from": "api",
+      "to": "tables",
+      "payload": "rating row",
+      "caption": "cp_act dispatches to cp_do_rate, which inserts the rating into the closed ratings table.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "line": 428,
+        "quote": "insert into public.ratings (code, pid, v, mode, t) values (e.code, _pid, val, md, n) returning id into rid;"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "pulse",
+      "payload": "cp_tick",
+      "caption": "The stage runs a 2-second ticker that calls cp_tick, so aggregation is polled and driven by clients rather than by a server scheduler.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "line": 126,
+        "quote": "if (ticker === 'always') { tick(); timers.push(setInterval(tick, 2000)); }"
+      }
+    },
+    {
+      "from": "pulse",
+      "to": "realtime",
+      "payload": "pulse {avg, n}",
+      "caption": "cp_tick computes the crowd figures from the tables and broadcasts the pulse on the session's ev: channel.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "line": 653,
+        "quote": "perform public.cp_send('ev:' || _c, 'pulse', pulse || jsonb_build_object('reacts', reacts));"
+      }
+    },
+    {
+      "from": "realtime",
+      "to": "supa",
+      "payload": "pulse broadcast",
+      "caption": "The stage's supa.js listens on a private channel. The database is the only sender, so browsers can't forge pulses.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "line": 105,
+        "quote": "const listen = (topic, onStatus) => sb.channel(topic, { config: { private: true } })"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "stage",
+      "payload": "pulse",
+      "caption": "The stage's socket.on('pulse') handler receives the broadcast and updates the big display.",
+      "cite": {
+        "file": "public/js/stage.js",
+        "line": 82,
+        "quote": "socket.on('pulse', onPulse);"
+      }
+    }
+  ],
+  "stepAt": [
+    4230,
+    5005,
+    5788,
+    6601,
+    7384,
+    8194,
+    12798
+  ],
+  "doneAt": 12798
+}

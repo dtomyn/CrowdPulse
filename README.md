@@ -236,6 +236,31 @@ C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_tour.py
 
 The film's stops are also written to `.tours/crowdpulse-code-tour.tour`. With the [CodeTour](https://marketplace.visualstudio.com/items?itemName=vsls-contrib.codetour) extension, VS Code can walk you through the same lines in the real editor.
 
+## Ask CrowdPulse video
+
+A third film, about the Ask CrowdPulse tool below: asking a question, watching the answer play on the map, how each step is checked against the code, and the same question answered for three audiences.
+
+- `film/ask/ask-film.js`: the scenes, narration, camera moves, the code panel and the overlays
+- `film/ask/server.mjs`: the film set. It serves the real tool from `ask/` with Claude switched off, and passes every answer the film shows through the tool's real checks on each render
+- `film/ask/record.mjs`: records the answers the film replays (`film/ask/takes/`). Each one is a real run of Claude Code, saved with the time every line arrived
+- `film/render_ask.py`: renders the frames and reuses the explainer's voice, music and mixing from `film/render.py`
+
+```bash
+C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_ask.py --storyboard
+```
+
+```bash
+C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_ask.py
+```
+
+`--storyboard` writes `film/out/crowdpulse-ask-storyboard.html`, the script, captions and YouTube text in a few minutes. The default run writes the 2560×1440 video `film/out/crowdpulse-ask.mp4` (add `--share` for a 1080p copy). `--preview` makes a quick 960×540 version, and `--shots 42 97.5` saves stills at those seconds to `film/.cache/ask/`.
+
+Rendering never calls Claude. The pages in the film are the real ones from `ask/public/`, and the answers are the recorded takes and the prepared examples. If the code or the map has changed, a quoted line may have moved on: the film then shows that step as unverified, exactly as the tool would. Record the takes again with `node film/ask/record.mjs --all` (or add `--record` to the render), which needs the Claude Code CLI. The numbers the narrator says (parts of the app, seconds to the first step) are read from the map and the takes, so they stay true after a new recording. The "planted mistakes" scene adds two bad steps on purpose (`PLANTED` in `film/ask/server.mjs`) and labels them on screen.
+
+## Ask CrowdPulse
+
+A local tool for questions about the code: `npm run ask`, then open http://localhost:3100. It answers with a short text and an animation on a map of the app's components, and checks every step against the real code. See [ask/README.md](ask/README.md).
+
 ## Stack
 
 Static HTML, CSS and JavaScript (no framework), with Supabase for the database, sign-in, Realtime and the report function (`@supabase/supabase-js`), `qrcode-generator` for QR codes made in the browser and Chart.js for report charts. The live gauge, streaming chart, backdrop and rating widgets are hand-built in canvas/SVG. The build (`npm run build`) only copies files into `dist/`: `public/`, the libraries from `node_modules` and the face model.

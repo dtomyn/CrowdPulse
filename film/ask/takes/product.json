@@ -1,0 +1,108 @@
+{
+  "question": "How does a rating get from a phone to the big screen?",
+  "audience": "product",
+  "recordedAt": "2026-11-15T15:16:31.492Z",
+  "model": "sonnet",
+  "commit": "fdbfac9",
+  "answer": "When someone moves their rating on their phone, it is sent to the database, which checks it and saves it. About every two seconds the database works out the crowd's average and broadcasts it. The big-screen page is listening and redraws its gauge and chart.",
+  "answerAt": 3097,
+  "steps": [
+    {
+      "at": "event",
+      "caption": "The attendee moves their rating on the phone, and the page sends it off.",
+      "cite": {
+        "file": "public/js/event.js",
+        "line": 112,
+        "quote": "socket.emit('rate', { v: pending, mode }); sendT = null;"
+      }
+    },
+    {
+      "from": "event",
+      "to": "supa",
+      "payload": "rating",
+      "caption": "The phone page hands the rating to the shared connection code, which turns it into a request to the database.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "line": 145,
+        "quote": "else res = await CP.call('cp_act', { _c: code, _action: name, _p: p === undefined ? null : p });"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "api",
+      "payload": "rate request",
+      "caption": "The request goes to the one gatekeeper the browser is allowed to call, which sees it is a rating.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "line": 700,
+        "quote": "when 'rate' then perform public.cp_do_rate(e, me, _p -> 'v', _p -> 'mode');"
+      }
+    },
+    {
+      "from": "api",
+      "to": "tables",
+      "payload": "saved rating",
+      "caption": "The rating is saved in the session's records, which the browser can't touch directly.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "line": 428,
+        "quote": "insert into public.ratings (code, pid, v, mode, t) values (e.code, _pid, val, md, n) returning id into rid;"
+      }
+    },
+    {
+      "from": "pulse",
+      "to": "realtime",
+      "payload": "crowd average",
+      "caption": "Every couple of seconds the crowd mood is recalculated and broadcast to everyone watching the session.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "line": 653,
+        "quote": "perform public.cp_send('ev:' || _c, 'pulse', pulse || jsonb_build_object('reacts', reacts));"
+      }
+    },
+    {
+      "from": "realtime",
+      "to": "supa",
+      "payload": "live pulse",
+      "caption": "The stage page's connection code receives that broadcast.",
+      "cite": {
+        "file": "public/js/stage.js",
+        "line": 82,
+        "quote": "socket.on('pulse', onPulse);"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "stage",
+      "payload": "live pulse",
+      "caption": "The stage page gets the new crowd mood and updates what the room sees.",
+      "cite": {
+        "file": "public/js/stage.js",
+        "line": 70,
+        "quote": "function onPulse(p) {"
+      }
+    },
+    {
+      "from": "stage",
+      "to": "common",
+      "payload": "gauge value",
+      "caption": "The shared drawing code animates the big gauge to the new crowd average.",
+      "cite": {
+        "file": "public/js/common.js",
+        "line": 153,
+        "quote": "CP.gauge = (host, { big = false } = {}) => {"
+      }
+    }
+  ],
+  "stepAt": [
+    3889,
+    4318,
+    5113,
+    5912,
+    6728,
+    7122,
+    7511,
+    13279
+  ],
+  "doneAt": 13280
+}

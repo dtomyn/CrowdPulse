@@ -6,6 +6,7 @@ Watch:
 
 - [What CrowdPulse does](https://youtu.be/wk60oe0w6Aw): a 4-minute walkthrough of the app, from creating a session to the report
 - [How the code works](https://www.youtube.com/watch?v=Zv5d5hBe0Uo): a 5-minute code tour, with the code on the left and the running app on the right
+- [Ask CrowdPulse](https://youtu.be/G-b8kl2GiV4): a 3½-minute look at the tool that answers questions about the code with an animation, checked against the code
 
 ## How it runs
 
@@ -235,6 +236,31 @@ C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_tour.py
 `--storyboard` writes `film/out/crowdpulse-code-tour-storyboard.html`, the script and captions in a few minutes. The default run writes the 2560×1440 video `film/out/crowdpulse-code-tour.mp4` (add `--share` for a 1080p copy). `--preview` makes a quick 960×540 version, and `--shots 42 97.5` saves stills at those seconds to `film/.cache/tour/` for checking a scene. Code is found by its text, not its line number (for example `E.open(0, EV, 'function join() {')`), and the render reports an error if a line the film points at no longer exists.
 
 The film's stops are also written to `.tours/crowdpulse-code-tour.tour`. With the [CodeTour](https://marketplace.visualstudio.com/items?itemName=vsls-contrib.codetour) extension, VS Code can walk you through the same lines in the real editor.
+
+## Ask CrowdPulse video
+
+A third film, about the Ask CrowdPulse tool below. Watch it at https://youtu.be/G-b8kl2GiV4. It covers asking a question, watching the answer play on the map, how each step is checked against the code, and the same question answered for three audiences.
+
+- `film/ask/ask-film.js`: the scenes, narration, camera moves, the code panel and the overlays
+- `film/ask/server.mjs`: the film set. It serves the real tool from `ask/` with Claude switched off, and passes every answer the film shows through the tool's real checks on each render
+- `film/ask/record.mjs`: records the answers the film replays (`film/ask/takes/`). Each one is a real run of Claude Code, saved with the time every line arrived
+- `film/render_ask.py`: renders the frames and reuses the explainer's voice, music and mixing from `film/render.py`
+
+```bash
+C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_ask.py --storyboard
+```
+
+```bash
+C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_ask.py
+```
+
+`--storyboard` writes `film/out/crowdpulse-ask-storyboard.html`, the script, captions and YouTube text in a few minutes. The default run writes the 2560×1440 video `film/out/crowdpulse-ask.mp4` (add `--share` for a 1080p copy). `--preview` makes a quick 960×540 version, and `--shots 42 97.5` saves stills at those seconds to `film/.cache/ask/`.
+
+Rendering never calls Claude. The pages in the film are the real ones from `ask/public/`, and the answers are the recorded takes and the prepared examples. If the code or the map has changed, a quoted line may have moved on: the film then shows that step as unverified, exactly as the tool would. Record the takes again with `node film/ask/record.mjs --all` (or add `--record` to the render), which needs the Claude Code CLI. The numbers the narrator says (parts of the app, seconds to the first step) are read from the map and the takes, so they stay true after a new recording. The "planted mistakes" scene adds two bad steps on purpose (`PLANTED` in `film/ask/server.mjs`) and labels them on screen.
+
+## Ask CrowdPulse
+
+A local tool for questions about the code: `npm run ask`, then open http://localhost:3100. It answers with a short text and an animation on a map of the app's components, and checks every step against the real code. See [ask/README.md](ask/README.md), or watch [the film about it](https://youtu.be/G-b8kl2GiV4).
 
 ## Stack
 

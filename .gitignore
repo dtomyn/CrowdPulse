@@ -21,6 +21,9 @@ film/vo/made.json
 film/out/*.mp4
 film/out/timeline.json
 
+# Ask CrowdPulse: saved answers
+ask/.cache/
+
 # Python
 __pycache__/
 *.pyc

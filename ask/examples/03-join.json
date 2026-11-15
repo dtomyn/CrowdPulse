@@ -1,0 +1,85 @@
+{
+  "question": "How does an attendee join a session?",
+  "audience": "product",
+  "answer": "The attendee types a code or scans the QR code and lands on the attendee page. Their phone is signed in anonymously in the background, so it has its own identity without an account. The database then adds them to the session and sends back everything the page needs to draw itself.",
+  "steps": [
+    {
+      "from": "home",
+      "to": "supa",
+      "payload": "code",
+      "caption": "On the home page, the typed code is looked up to check the session exists.",
+      "cite": {
+        "file": "public/js/home.js",
+        "quote": "CP.rpc('cp_event_public', { _c: code })"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "auth",
+      "payload": "anonymous sign-in",
+      "caption": "Before the first request, the phone is signed in anonymously: no account and no form.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "quote": "sb.auth.signInAnonymously()"
+      }
+    },
+    {
+      "from": "event",
+      "to": "supa",
+      "payload": "join",
+      "caption": "The attendee page asks to join, sending the person's name, avatar and colour.",
+      "cite": {
+        "file": "public/js/event.js",
+        "quote": "socket.emit('join', { code, ...me }, res => {"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "api",
+      "payload": "cp_join",
+      "caption": "The request becomes a call to the database's join function.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "quote": "if (name === 'join') res = await CP.call('cp_join'"
+      }
+    },
+    {
+      "from": "api",
+      "to": "tables",
+      "payload": "participant",
+      "caption": "The database adds the person to the session, unless it is full.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "part := public.cp_upsert_participant(e.code, me, _p, false);"
+      }
+    },
+    {
+      "from": "api",
+      "to": "supa",
+      "payload": "snapshot",
+      "caption": "It replies with a snapshot of the session so far, and a public id that others see instead of the person's account.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "|| public.cp_snapshot(e.code, me);"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "realtime",
+      "payload": "listen",
+      "caption": "The page starts listening for live updates on the session's private channel.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "quote": "listen('ev:' + code, (st, err) => {"
+      }
+    },
+    {
+      "at": "event",
+      "caption": "With the snapshot in hand, the page draws itself and the attendee can start rating.",
+      "cite": {
+        "file": "public/js/event.js",
+        "quote": "state = res; myRating = res.myRating;"
+      }
+    }
+  ]
+}

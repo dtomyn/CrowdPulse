@@ -11,6 +11,8 @@
     "dev": "node scripts/dev.mjs",
     "dev:local": "node scripts/dev.mjs --local",
     "build": "node scripts/build.mjs",
+    "ask": "node ask/server.mjs",
+    "test:ask": "node --test ask/test/",
     "db:start": "supabase start",
     "db:reset": "supabase db reset"
   },

@@ -1,0 +1,199 @@
+1
+00:00:00,250 --> 00:00:03,618
+Some questions about a codebase take an afternoon to answer.
+
+2
+00:00:03,618 --> 00:00:06,650
+How does a rating get from a phone, to the big screen?
+
+3
+00:00:08,850 --> 00:00:10,251
+What if you could just ask?
+
+4
+00:00:10,251 --> 00:00:11,965
+And then watch the answer happen.
+
+5
+00:00:17,050 --> 00:00:18,557
+This is Ask CrowdPulse.
+
+6
+00:00:18,557 --> 00:00:21,966
+It runs on your own machine, right next to the code.
+
+7
+00:00:21,966 --> 00:00:25,178
+Type a question, say who’s asking, and press Ask.
+
+8
+00:00:28,850 --> 00:00:31,009
+Claude Code reads the repository.
+
+9
+00:00:31,009 --> 00:00:36,242
+A few seconds later, a short answer appears, and then the steps start to arrive.
+
+10
+00:00:36,242 --> 00:00:39,645
+The animation begins before the answer has finished.
+
+11
+00:00:42,350 --> 00:00:43,698
+Each step is one claim.
+
+12
+00:00:43,698 --> 00:00:48,387
+Something travels between two parts of the app, and the caption says what it is.
+
+13
+00:00:52,350 --> 00:00:54,570
+Phone, to connection, to database.
+
+14
+00:00:54,570 --> 00:00:57,641
+Then back out, on a broadcast, to every screen.
+
+15
+00:01:01,850 --> 00:01:03,425
+Here’s why you can trust it.
+
+16
+00:01:03,425 --> 00:01:05,788
+Every step quotes a line of the real code,
+
+17
+00:01:05,788 --> 00:01:09,445
+and that quote is looked up in the file before the step is shown.
+
+18
+00:01:13,650 --> 00:01:16,334
+To show what happens when the model gets it wrong,
+
+19
+00:01:16,334 --> 00:01:18,429
+we planted two mistakes in this answer.
+
+20
+00:01:21,450 --> 00:01:25,151
+This step jumps between two parts that aren’t connected on the map.
+
+21
+00:01:25,151 --> 00:01:26,698
+It never reaches the screen.
+
+22
+00:01:30,650 --> 00:01:33,765
+And this one quotes a line that isn’t in the file.
+
+23
+00:01:33,765 --> 00:01:36,133
+It’s shown, but flagged as unverified.
+
+24
+00:01:39,850 --> 00:01:42,296
+A verified step proves the line exists.
+
+25
+00:01:42,296 --> 00:01:45,934
+Whether the caption reads it correctly is still your call,
+
+26
+00:01:45,934 --> 00:01:48,255
+so the line is always one click away.
+
+27
+00:01:50,650 --> 00:01:52,558
+Under the hood, the map is fixed.
+
+28
+00:01:52,558 --> 00:01:55,970
+Eighteen parts of the app and the connections between them,
+
+29
+00:01:55,970 --> 00:01:58,053
+each one anchored to a line of code.
+
+30
+00:02:01,850 --> 00:02:03,596
+Claude doesn’t draw anything.
+
+31
+00:02:03,596 --> 00:02:08,234
+It gets the map and an outline of the code, and replies with a list of steps,
+
+32
+00:02:08,234 --> 00:02:09,018
+one per line.
+
+33
+00:02:13,350 --> 00:02:15,575
+Because the map is already on screen,
+
+34
+00:02:15,575 --> 00:02:19,244
+the answer can start playing as soon as the first line lands.
+
+35
+00:02:19,244 --> 00:02:21,350
+Here, that took about four seconds.
+
+36
+00:02:24,150 --> 00:02:26,704
+The same question can be asked three ways.
+
+37
+00:02:26,704 --> 00:02:28,651
+A developer gets function names.
+
+38
+00:02:32,350 --> 00:02:35,025
+An architect gets boundaries and trade-offs.
+
+39
+00:02:35,025 --> 00:02:37,214
+A product owner gets plain language.
+
+40
+00:02:41,150 --> 00:02:43,753
+Same map, same code, three different stories.
+
+41
+00:02:47,150 --> 00:02:49,549
+The prepared examples double as tests.
+
+42
+00:02:49,549 --> 00:02:51,632
+Every one has to play on the map,
+
+43
+00:02:51,632 --> 00:02:54,979
+and every quoted line has to exist in the code today.
+
+44
+00:02:57,950 --> 00:03:03,340
+Change a line that an answer depends on, and the test run fails and names the quote.
+
+45
+00:03:03,340 --> 00:03:05,907
+The explanations can’t quietly go stale.
+
+46
+00:03:08,950 --> 00:03:09,997
+Ask CrowdPulse.
+
+47
+00:03:09,997 --> 00:03:11,045
+Ask a question.
+
+48
+00:03:11,045 --> 00:03:12,233
+Watch the answer.
+
+49
+00:03:12,233 --> 00:03:13,280
+Check the line.
+
+50
+00:03:17,550 --> 00:03:23,011
+To try it, run npm run ask, and open localhost, port thirty-one hundred.

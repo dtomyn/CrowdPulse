@@ -6,6 +6,7 @@ Watch:
 
 - [What CrowdPulse does](https://youtu.be/wk60oe0w6Aw): a 4-minute walkthrough of the app, from creating a session to the report
 - [How the code works](https://www.youtube.com/watch?v=Zv5d5hBe0Uo): a 5-minute code tour, with the code on the left and the running app on the right
+- [Ask CrowdPulse](https://youtu.be/G-b8kl2GiV4): a 3½-minute look at the tool that answers questions about the code with an animation, checked against the code
 
 ## How it runs
 
@@ -238,7 +239,7 @@ The film's stops are also written to `.tours/crowdpulse-code-tour.tour`. With th
 
 ## Ask CrowdPulse video
 
-A third film, about the Ask CrowdPulse tool below: asking a question, watching the answer play on the map, how each step is checked against the code, and the same question answered for three audiences.
+A third film, about the Ask CrowdPulse tool below. Watch it at https://youtu.be/G-b8kl2GiV4. It covers asking a question, watching the answer play on the map, how each step is checked against the code, and the same question answered for three audiences.
 
 - `film/ask/ask-film.js`: the scenes, narration, camera moves, the code panel and the overlays
 - `film/ask/server.mjs`: the film set. It serves the real tool from `ask/` with Claude switched off, and passes every answer the film shows through the tool's real checks on each render
@@ -259,7 +260,7 @@ Rendering never calls Claude. The pages in the film are the real ones from `ask/
 
 ## Ask CrowdPulse
 
-A local tool for questions about the code: `npm run ask`, then open http://localhost:3100. It answers with a short text and an animation on a map of the app's components, and checks every step against the real code. See [ask/README.md](ask/README.md).
+A local tool for questions about the code: `npm run ask`, then open http://localhost:3100. It answers with a short text and an animation on a map of the app's components, and checks every step against the real code. See [ask/README.md](ask/README.md), or watch [the film about it](https://youtu.be/G-b8kl2GiV4).
 
 ## Stack
 

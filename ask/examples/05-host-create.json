@@ -1,0 +1,85 @@
+{
+  "question": "How does a host sign in and create a session?",
+  "audience": "product",
+  "answer": "Hosts sign in on the host dashboard with a link sent to their email. Only email addresses on the hosts list can create sessions, and the database enforces that, not the page. A new session gets a 6-character join code.",
+  "steps": [
+    {
+      "from": "admin",
+      "to": "supa",
+      "payload": "email",
+      "caption": "The host enters their email on the dashboard and asks for a sign-in link.",
+      "cite": {
+        "file": "public/js/admin.js",
+        "quote": "CP.sb.auth.signInWithOtp({ email"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "auth",
+      "payload": "email link",
+      "caption": "Only the host dashboard is treated as a sign-in landing page, so the emailed link brings the host back to it signed in.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "quote": "detectSessionInUrl: document.documentElement.dataset.auth === 'callback'"
+      }
+    },
+    {
+      "from": "admin",
+      "to": "supa",
+      "payload": "who am I?",
+      "caption": "The dashboard asks whether this email is allowed to host.",
+      "cite": {
+        "file": "public/js/admin.js",
+        "quote": "st = await CP.rpc('cp_host_status')"
+      }
+    },
+    {
+      "from": "api",
+      "to": "tables",
+      "payload": "hosts?",
+      "caption": "The database checks the email against the hosts list.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "and exists (select 1 from public.hosts where email = lower(auth.jwt() ->> 'email'))"
+      }
+    },
+    {
+      "from": "admin",
+      "to": "supa",
+      "payload": "new session",
+      "caption": "The host fills in the new-session form and submits it.",
+      "cite": {
+        "file": "public/js/admin.js",
+        "quote": "CP.rpc('cp_create_event', { _b: body })"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "api",
+      "payload": "cp_create_event",
+      "caption": "The form travels to the database as one function call.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "quote": "const { data, error } = await sb.rpc(fn, args);"
+      }
+    },
+    {
+      "at": "api",
+      "caption": "The database refuses anyone who is not an approved host, whatever the page shows.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "if not public.cp_is_host() then"
+      }
+    },
+    {
+      "from": "api",
+      "to": "tables",
+      "payload": "session + code",
+      "caption": "It generates a join code and saves the session.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "c := public.cp_new_code();"
+      }
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "question": "How does the live pulse reach every screen?",
+  "audience": "architect",
+  "answer": "The database works out the pulse, not the browsers. The control room and stage view ask for it every 2 seconds, the database does the work at most once per 1.8 seconds, and the result goes out on a private Realtime channel that every page in the session listens to. If the presenter's screens are closed, attendee pages keep it going.",
+  "steps": [
+    {
+      "from": "control",
+      "to": "supa",
+      "payload": "ticker: always",
+      "caption": "The control room opens its connection with ticker 'always': it takes responsibility for keeping the pulse going.",
+      "cite": {
+        "file": "public/js/control.js",
+        "quote": "CP.connect({ code, ticker: 'always' })"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "pulse",
+      "payload": "cp_tick",
+      "caption": "The connection calls cp_tick straight away and then every 2 seconds.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "quote": "if (ticker === 'always') { tick(); timers.push(setInterval(tick, 2000)); }"
+      }
+    },
+    {
+      "at": "pulse",
+      "caption": "Only one call per 1.8 seconds does any work, so several screens ticking at once cost one computation.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "and last_tick < n - 1800 returning * into e;"
+      }
+    },
+    {
+      "from": "pulse",
+      "to": "tables",
+      "payload": "aggregate",
+      "caption": "It reads the room's current ratings and works out the average and a five-band distribution.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "select avg(rating), count(*),"
+      }
+    },
+    {
+      "from": "pulse",
+      "to": "realtime",
+      "payload": "pulse",
+      "caption": "The result is one broadcast on the session channel. Recent reactions ride along to save Realtime messages.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "'pulse', pulse || jsonb_build_object('reacts', reacts)"
+      }
+    },
+    {
+      "at": "realtime",
+      "caption": "The channel is private: anyone in an existing session may listen, and only the database sends.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "((select realtime.topic()) like 'ev:%' and public.cp_event_exists("
+      }
+    },
+    {
+      "from": "realtime",
+      "to": "supa",
+      "payload": "pulse",
+      "caption": "Every page's connection receives the same broadcast.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "quote": ".on('broadcast', { event: '*' }, m => deliver(m.event, m.payload?.v))"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "stage",
+      "payload": "pulse",
+      "caption": "The stage view redraws its big gauge from it.",
+      "cite": {
+        "file": "public/js/stage.js",
+        "quote": "socket.on('pulse', onPulse);"
+      }
+    },
+    {
+      "from": "event",
+      "to": "supa",
+      "payload": "fallback tick",
+      "caption": "Attendee pages tick only when no pulse has arrived for 6 to 10 seconds, which covers the presenter's screens being closed.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "quote": "if ((status === 'live' || status === 'scheduled') && Date.now() - lastPulse > wait)"
+      }
+    }
+  ]
+}

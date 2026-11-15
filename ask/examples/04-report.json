@@ -1,0 +1,85 @@
+{
+  "question": "How is the post-session report built?",
+  "audience": "developer",
+  "answer": "The report page fetches the report from an Edge Function, not from the database. The function checks access as the caller, reads the session's raw data with the service role, runs analytics.js over it and returns only crowd-level figures.",
+  "steps": [
+    {
+      "from": "report",
+      "to": "supa",
+      "payload": "report?",
+      "caption": "report.js asks for the report as soon as the page loads.",
+      "cite": {
+        "file": "public/js/report.js",
+        "quote": "r = await CP.report(code)"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "reportfn",
+      "payload": "GET ?code=",
+      "caption": "CP.report calls the Edge Function with the caller's access token.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "quote": "/functions/v1/report?code="
+      }
+    },
+    {
+      "from": "reportfn",
+      "to": "api",
+      "payload": "cp_report_access",
+      "caption": "The function asks the database, as the caller, whether they may read this report.",
+      "cite": {
+        "file": "supabase/functions/report/index.ts",
+        "quote": "asUser.rpc('cp_report_access', { _c: code })"
+      }
+    },
+    {
+      "at": "api",
+      "caption": "Admins always may. Anyone else may only once the host has shared the report.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "when public.cp_setting(e.settings, 'publicReport', false) then"
+      }
+    },
+    {
+      "from": "reportfn",
+      "to": "api",
+      "payload": "cp_report_data",
+      "caption": "It then reads the raw data with the service role, the only role allowed to call cp_report_data.",
+      "cite": {
+        "file": "supabase/functions/report/index.ts",
+        "quote": "admin.rpc('cp_report_data', { _c: code })"
+      }
+    },
+    {
+      "from": "api",
+      "to": "tables",
+      "payload": "all rows",
+      "caption": "cp_report_data gathers ratings, messages, polls, feedback and pulse history, keyed by public id.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "'pulseHistory', (select coalesce(jsonb_agg(h.p order by h.t)"
+      }
+    },
+    {
+      "from": "reportfn",
+      "to": "analytics",
+      "payload": "buildReport(ev)",
+      "caption": "analytics.js turns the raw session into the grade, KPIs, timeline and key moments.",
+      "cite": {
+        "file": "supabase/functions/report/index.ts",
+        "quote": "return json(buildReport(ev));"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "report",
+      "payload": "report JSON",
+      "caption": "The page receives the finished report as JSON and draws it.",
+      "cite": {
+        "file": "public/js/report.js",
+        "quote": "R = await r.json();"
+      }
+    }
+  ]
+}

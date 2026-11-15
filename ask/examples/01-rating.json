@@ -1,0 +1,93 @@
+{
+  "question": "What happens when an attendee moves the rating slider?",
+  "audience": "developer",
+  "answer": "The attendee page keeps only the latest slider value and sends one 'rate' action every 250 ms. The database stores it against the participant and broadcasts nothing straight away. The next live pulse, at most 2 seconds later, includes it in the crowd average that every screen draws.",
+  "steps": [
+    {
+      "at": "event",
+      "caption": "sendRating keeps the latest value and starts a 250 ms timer, so a drag doesn't flood the back end.",
+      "cite": {
+        "file": "public/js/event.js",
+        "quote": "function sendRating(v) {"
+      }
+    },
+    {
+      "from": "event",
+      "to": "supa",
+      "payload": "rate {v, mode}",
+      "caption": "When the timer fires, the page emits one 'rate' action with the value and the rating style.",
+      "cite": {
+        "file": "public/js/event.js",
+        "quote": "socket.emit('rate', { v: pending, mode })"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "api",
+      "payload": "cp_act('rate')",
+      "caption": "supa.js turns every action that isn't join, watch or admin into a call to cp_act.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "quote": "else res = await CP.call('cp_act', { _c: code, _action: name"
+      }
+    },
+    {
+      "at": "api",
+      "caption": "cp_act checks the caller has joined the session, then hands the value to cp_do_rate.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "when 'rate' then perform public.cp_do_rate(e, me, _p -> 'v', _p -> 'mode');"
+      }
+    },
+    {
+      "from": "api",
+      "to": "tables",
+      "payload": "rating row",
+      "caption": "Ratings less than 1.5 s apart update one row; otherwise a new row goes into ratings.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "if part.rating_row is not null and n - part.rating_t < 1500 then"
+      }
+    },
+    {
+      "from": "tables",
+      "to": "pulse",
+      "payload": "avg(rating)",
+      "caption": "Within 2 seconds, cp_tick averages the current rating of everyone still in the room.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "select avg(rating), count(*),"
+      }
+    },
+    {
+      "from": "pulse",
+      "to": "realtime",
+      "payload": "pulse",
+      "caption": "The new average goes out as a pulse broadcast on the session channel.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "'pulse', pulse || jsonb_build_object('reacts', reacts)"
+      }
+    },
+    {
+      "from": "realtime",
+      "to": "supa",
+      "payload": "pulse",
+      "caption": "Each page's connection receives the broadcast and passes it to the page's handlers.",
+      "cite": {
+        "file": "public/js/supa.js",
+        "quote": ".on('broadcast', { event: '*' }, m => deliver(m.event, m.payload?.v))"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "event",
+      "payload": "pulse",
+      "caption": "The attendee page's pulse handler runs and redraws the crowd gauge.",
+      "cite": {
+        "file": "public/js/event.js",
+        "quote": "socket.on('pulse', onPulse);"
+      }
+    }
+  ]
+}

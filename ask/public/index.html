@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ask CrowdPulse</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <h1>Ask CrowdPulse</h1>
+    <p class="sub">Ask how the app works. The answer is checked against the code and played on the map. <span id="commit"></span></p>
+  </header>
+
+  <form id="ask" autocomplete="off">
+    <input id="q" name="q" type="text" maxlength="400" placeholder="How does a rating get from a phone to the big screen?" aria-label="Your question" required>
+    <select id="audience" aria-label="Who is asking">
+      <option value="developer">Developer</option>
+      <option value="architect">Architect</option>
+      <option value="product">Product owner</option>
+    </select>
+    <button id="go" type="submit">Ask</button>
+  </form>
+  <div id="examples" aria-label="Example questions"></div>
+
+  <main>
+    <section class="stage-wrap">
+      <svg id="stage" role="img" aria-label="Map of the app's components"></svg>
+      <div id="caption" aria-live="polite">
+        <p class="hint">Pick an example or ask a question. Click any component to see what it does.</p>
+      </div>
+      <div class="controls">
+        <button id="prev" type="button" title="Previous step" aria-label="Previous step">◀</button>
+        <button id="play" type="button" title="Play or pause" aria-label="Play or pause">▶</button>
+        <button id="next" type="button" title="Next step" aria-label="Next step">▶▶</button>
+        <button id="replay" type="button">Replay</button>
+        <label class="speed">Speed
+          <select id="speed"><option value="0.6">Slow</option><option value="1" selected>Normal</option><option value="1.8">Fast</option></select>
+        </label>
+      </div>
+    </section>
+
+    <aside>
+      <div id="status"></div>
+      <p id="answer"></p>
+      <ol id="steps"></ol>
+      <p id="foot" class="hidden"><button id="fresh" type="button" class="link">Ask Claude again, ignoring the saved answer</button></p>
+    </aside>
+  </main>
+
+  <script src="player.js"></script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+{
+  "question": "Why can't a browser read the database tables directly?",
+  "audience": "architect",
+  "answer": "Every table has Row Level Security switched on with no policies, and table privileges are revoked from the browser roles. The only way in is the short list of functions granted at the end of the migration, each of which checks who is calling. Live updates are one-way too: only the database sends on the Realtime channels.",
+  "steps": [
+    {
+      "at": "tables",
+      "caption": "Row Level Security is enabled on every table with no policies, so nothing is readable or writable directly.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "execute format('alter table public.%I enable row level security', t);"
+      }
+    },
+    {
+      "at": "tables",
+      "caption": "Table privileges are also revoked from the anonymous and signed-in roles.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "execute format('revoke all on table public.%I from anon, authenticated', t);"
+      }
+    },
+    {
+      "from": "supa",
+      "to": "api",
+      "payload": "sb.rpc(...)",
+      "caption": "Browsers can only call functions, and only the ones explicitly granted.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "public.cp_join(text, jsonb), public.cp_watch(text), public.cp_act(text, text, jsonb), public.cp_tick(text),"
+      }
+    },
+    {
+      "from": "api",
+      "to": "auth",
+      "payload": "auth.uid()",
+      "caption": "Each function takes the caller from their signed-in session, not from anything the page sends.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "declare e public.events; me text := auth.uid()::text; n bigint := public.cp_now();"
+      }
+    },
+    {
+      "from": "api",
+      "to": "tables",
+      "payload": "checked write",
+      "caption": "The function, not the browser, touches the tables, after validating input and applying per-person rate limits.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "if not public.cp_throttle_ok(e.code, _pid, 'chat', 700) then return; end if;"
+      }
+    },
+    {
+      "from": "api",
+      "to": "realtime",
+      "payload": "cp_send",
+      "caption": "Updates leave through the database's own broadcast call.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "perform realtime.send(jsonb_build_object('v', _v), _event, _topic, true);"
+      }
+    },
+    {
+      "from": "realtime",
+      "to": "supa",
+      "payload": "broadcast",
+      "caption": "Browsers can only listen, and the admin channel is open only to a session's admins.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "or ((select realtime.topic()) like 'adm:%' and public.cp_is_admin("
+      }
+    },
+    {
+      "at": "reportfn",
+      "caption": "The one exception is the report function: it reads raw data with the service role and returns only crowd figures.",
+      "cite": {
+        "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+        "quote": "grant execute on function public.cp_report_data(text) to service_role;"
+      }
+    }
+  ]
+}

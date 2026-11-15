@@ -2,7 +2,10 @@
 
 Real-time audience rating for talks, workshops and meetings. Attendees scan a QR code (or type a 6-character code), rate the session as it happens, chat, ask questions and vote in polls. The presenter gets a live control room, a big-screen stage view and a detailed report afterwards.
 
-See: https://youtu.be/wk60oe0w6Aw
+Watch:
+
+- [What CrowdPulse does](https://youtu.be/wk60oe0w6Aw): a 4-minute walkthrough of the app, from creating a session to the report
+- [How the code works](https://www.youtube.com/watch?v=Zv5d5hBe0Uo): a 5-minute code tour, with the code on the left and the running app on the right
 
 ## How it runs
 
@@ -187,7 +190,7 @@ Expression and attention estimates are approximate. Treat them as a hint alongsi
 
 ## Explainer video
 
-A narrated walkthrough of the app, filmed from the real pages one exact frame at a time, lives in `film/`.
+A narrated walkthrough of the app, filmed from the real pages one exact frame at a time, lives in `film/`. Watch it at https://youtu.be/wk60oe0w6Aw.
 
 > **Needs updating:** the film pipeline still drives the old Node server (`server.js` and `lib/`), which the Supabase version replaced. To re-render the film, use the last commit before the move to Supabase until the pipeline is ported.
 
@@ -210,6 +213,28 @@ C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render.py
 The report scene shows a reproducible 30-minute session built by `node film/fixture.js` (saved as `film/fixture/db.json`). It runs every second through the app's own passive-signal code, so the report includes passive signals, "engaged but critical" and "polite but distracted" stretches, and laughter peaks. Use `--data` and `--code` to film another session instead.
 
 `--storyboard` writes `film/out/storyboard.html`, `script.md` and captions in a few minutes. The default run writes the 2560×1440 video `film/out/crowdpulse-explainer.mp4` (add `--share` for a 1080p copy), the storyboard built from master frames, captions (`.srt`) and a thumbnail. `--preview` makes a quick 960×540 version. The film's server reads a copy of the data, so your own sessions in `data/` are never touched. To replace a synthetic line with a real recording, save `film/vo/recorded/<id>.wav` (ids are in `script.md`), and the picture retimes to fit.
+
+## Code tour video
+
+A second film, for people who want to understand the code. Watch it at https://www.youtube.com/watch?v=Zv5d5hBe0Uo. The left of the screen is a VS Code style editor showing the real source files, and the right is the app, running. It covers how the code is laid out and the main paths (joining, going live, the live pulse, chat and reactions, the report), not every line.
+
+- `film/tour/tour.js`: the scenes and narration, the editor (file tree, tabs, highlighted lines, notes), the live trace panel and the map of the code
+- `film/tour/fakesupa.js`: an in-page stand-in for the Supabase project. It replays the database functions and Realtime broadcasts in JavaScript, with a scripted audience, so every take is identical
+- `film/render_tour.py`: serves the set, renders the frames and reuses the explainer's voice, music and mixing from `film/render.py`
+
+The app pages in the film are the real ones from `public/`. Every database call and broadcast they make is traced, and the trace moves the editor: a line turns yellow when the app really makes that call or receives that broadcast. The SQL shown is the real migration, but it is the stand-in that runs, so if you change a database function, change `fakesupa.js` to match. The report scene runs the real `analytics.js` on the session in `film/fixture/db.json`.
+
+```bash
+C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_tour.py --storyboard
+```
+
+```bash
+C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_tour.py
+```
+
+`--storyboard` writes `film/out/crowdpulse-code-tour-storyboard.html`, the script and captions in a few minutes. The default run writes the 2560×1440 video `film/out/crowdpulse-code-tour.mp4` (add `--share` for a 1080p copy). `--preview` makes a quick 960×540 version, and `--shots 42 97.5` saves stills at those seconds to `film/.cache/tour/` for checking a scene. Code is found by its text, not its line number (for example `E.open(0, EV, 'function join() {')`), and the render reports an error if a line the film points at no longer exists.
+
+The film's stops are also written to `.tours/crowdpulse-code-tour.tour`. With the [CodeTour](https://marketplace.visualstudio.com/items?itemName=vsls-contrib.codetour) extension, VS Code can walk you through the same lines in the real editor.
 
 ## Stack
 

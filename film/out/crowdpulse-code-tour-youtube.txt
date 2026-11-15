@@ -1,0 +1,48 @@
+TITLE
+How a Real-Time App Works With No Server: Code on the Left, App on the Right | CrowdPulse Code Tour
+
+ALTERNATIVE TITLES
+Follow One emit(): A 5-Minute Code Tour of a Live Audience App (Static Pages + Supabase)
+Six Pages, One SQL File, No Server: Inside CrowdPulse's Real-Time Code
+
+DESCRIPTION
+What actually runs when someone drags a rating slider and a gauge moves on the projector?
+
+This is a code tour of CrowdPulse, a live audience rating app. The code is on the left, the running app is on the right, and a line lights up at the moment the app really makes that call or receives that broadcast.
+
+It is a map, not a line-by-line walkthrough: how the code is laid out, and what runs on the app's main paths. Under 5 minutes.
+
+What you'll see:
+• The layout: six plain HTML pages with one script each, no framework, and a build that just copies files
+• The back end: Supabase, with almost everything in one SQL file (tables, security rules and a function for every action)
+• The one idea that holds it together: emit goes up through a database function, and a Realtime broadcast comes back down
+• Joining a session: one call, and a snapshot that the page renders from
+• Going live: the host's button, the admin check in the database, and the broadcast that flips every phone
+• The live pulse: why a hundred people dragging sliders still means one broadcast every two seconds
+• Chat, questions, polls and reactions taking the same route
+• Where the rules live: closed tables, and a short list of functions a browser may call
+• The report: an Edge Function that reads the raw data and returns only crowd-level results
+
+Chapters
+0:00 Intro
+0:18 How the code is laid out
+0:56 One connection, two directions
+1:31 Joining a session
+2:06 Going live
+2:33 The live pulse
+3:23 Everything else, same route
+3:49 The report
+4:18 The map, and how to explore it yourself
+
+Explore it yourself: run npm run dev, open a session's control room and start the built-in audience simulator. The same stops are in the repository as a VS Code CodeTour (.tours/crowdpulse-code-tour.tour).
+
+Code: https://github.com/dtomyn/CrowdPulse
+
+New to CrowdPulse? Watch the walkthrough of what it does first: https://youtu.be/wk60oe0w6Aw
+
+How this was made: the app on the right is the real application, recorded frame by frame. The editor on the left is a recreation in the style of VS Code, showing the real source files. For repeatable filming, the app talks to an in-browser stand-in that follows the same rules as the database, so the SQL on screen is the real code but not the copy that is executing. The audience is simulated, and the narration uses a synthetic voice (Kokoro text-to-speech).
+
+#WebDevelopment #Supabase #JavaScript
+
+TAGS
+code walkthrough, code tour, software architecture, real-time web app, Supabase, Supabase Realtime, Postgres functions, PL/pgSQL, row level security, Edge Functions, serverless, no framework, vanilla JavaScript, static site, GitHub Pages, live audience rating, audience feedback, VS Code, CodeTour, CrowdPulse

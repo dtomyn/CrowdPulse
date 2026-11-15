@@ -1,0 +1,241 @@
+{
+  "$schema": "https://aka.ms/codetour-schema",
+  "title": "CrowdPulse code tour",
+  "description": "The stops from the code tour film (film/out/crowdpulse-code-tour.mp4)",
+  "steps": [
+    {
+      "file": "public/js/home.js",
+      "line": 36,
+      "title": "This loop drives the demo gauge, once a second",
+      "description": "**This loop drives the demo gauge, once a second**\n\nThis is CrowdPulse, from the inside. On the right, the app, running. On the left, the code that’s running it."
+    },
+    {
+      "file": "public/event.html",
+      "line": 145,
+      "title": "The helpers first, then the page’s own script",
+      "description": "**The helpers first, then the page’s own script**\n\nEvery page loads the same two helpers before its own script. common.js draws the shared pieces, like the gauge and the chart. supa.js is the connection to the back end."
+    },
+    {
+      "file": "public/event.html",
+      "line": 148,
+      "title": "Shared drawing code",
+      "description": "**Shared drawing code**\n\nEvery page loads the same two helpers before its own script. common.js draws the shared pieces, like the gauge and the chart. supa.js is the connection to the back end."
+    },
+    {
+      "file": "public/event.html",
+      "line": 149,
+      "title": "The connection to the back end",
+      "description": "**The connection to the back end**\n\nEvery page loads the same two helpers before its own script. common.js draws the shared pieces, like the gauge and the chart. supa.js is the connection to the back end."
+    },
+    {
+      "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+      "line": 3,
+      "title": "One file: tables, rules and functions",
+      "description": "**One file: tables, rules and functions**\n\nThe back end is Supabase, and almost all of it is one SQL file: the tables, the security rules, and a function for every action. There’s no server of our own to run."
+    },
+    {
+      "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+      "line": 28,
+      "title": "The tables…",
+      "description": "**The tables…**\n\nThe back end is Supabase, and almost all of it is one SQL file: the tables, the security rules, and a function for every action. There’s no server of our own to run."
+    },
+    {
+      "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+      "line": 668,
+      "title": "…and a function for every action",
+      "description": "**…and a function for every action**\n\nThe back end is Supabase, and almost all of it is one SQL file: the tables, the security rules, and a function for every action. There’s no server of our own to run."
+    },
+    {
+      "file": "public/js/supa.js",
+      "line": 4,
+      "title": "The whole design, in two comment lines",
+      "description": "**The whole design, in two comment lines**\n\nOne idea holds it all together, and it lives in supa.js. Every page asks for a connection, and gets back a small socket with two methods."
+    },
+    {
+      "file": "public/js/supa.js",
+      "line": 135,
+      "title": "The socket every page gets",
+      "description": "**The socket every page gets**\n\nOne idea holds it all together, and it lives in supa.js. Every page asks for a connection, and gets back a small socket with two methods."
+    },
+    {
+      "file": "public/js/supa.js",
+      "line": 138,
+      "title": "emit ↑ becomes a database function call",
+      "description": "**emit ↑ becomes a database function call**\n\nEmit sends something up. Each name maps to a database function: join, an admin action, or anything else an attendee does."
+    },
+    {
+      "file": "public/js/supa.js",
+      "line": 105,
+      "title": "on ↓ receives a Realtime broadcast",
+      "description": "**on ↓ receives a Realtime broadcast**\n\nAnd on listens for what comes back down: a Realtime broadcast, on a private channel that belongs to this one session."
+    },
+    {
+      "file": "public/js/home.js",
+      "line": 26,
+      "title": "Does this session exist?",
+      "description": "**Does this session exist?**\n\nWatch it happen. An attendee types a join code on the home page. home.js asks the database whether that session exists, then opens the attendee page."
+    },
+    {
+      "file": "public/js/event.js",
+      "line": 22,
+      "title": "emit('join') ↑",
+      "description": "**emit('join') ↑**\n\nThere, event.js connects and emits join. In the database, cp_join records the participant, and hands back a snapshot: everything the page needs to draw itself."
+    },
+    {
+      "file": "public/js/event.js",
+      "line": 53,
+      "title": "State in, screen out",
+      "description": "**State in, screen out**\n\nFrom then on, the page keeps that snapshot as its state, and render functions turn state into screen. The session hasn’t started, so it draws the lobby."
+    },
+    {
+      "file": "public/js/control.js",
+      "line": 47,
+      "title": "The Go live button: emit('admin:start')",
+      "description": "**The Go live button: emit('admin:start')**\n\nNow the host. In the control room, the Go live button emits admin start."
+    },
+    {
+      "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+      "line": 748,
+      "title": "First: is the caller an admin?",
+      "description": "**First: is the caller an admin?**\n\nIn the database, cp_admin checks that the caller really is an admin of this session, flips the status to live, and broadcasts the new event to everyone."
+    },
+    {
+      "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+      "line": 751,
+      "title": "Status → live, then broadcast to everyone",
+      "description": "**Status → live, then broadcast to everyone**\n\nIn the database, cp_admin checks that the caller really is an admin of this session, flips the status to live, and broadcasts the new event to everyone."
+    },
+    {
+      "file": "public/js/event.js",
+      "line": 299,
+      "title": "The phone hears the new event",
+      "description": "**The phone hears the new event**\n\nOn the phone, the event listener sees the status change and renders again. The lobby becomes the rating screen. Nobody refreshed anything."
+    },
+    {
+      "file": "public/js/event.js",
+      "line": 107,
+      "title": "Wait 250 ms, then emit once",
+      "description": "**Wait 250 ms, then emit once**\n\nHere’s the heart of it. Dragging the slider calls send rating, which waits a quarter of a second, then emits rate."
+    },
+    {
+      "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+      "line": 700,
+      "title": "cp_act: one branch per action",
+      "description": "**cp_act: one branch per action**\n\ncp_act routes it to cp_do_rate, which stores the number against that participant. Notice what it doesn’t do: it doesn’t tell anyone."
+    },
+    {
+      "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+      "line": 423,
+      "title": "Store it. No broadcast here.",
+      "description": "**Store it. No broadcast here.**\n\ncp_act routes it to cp_do_rate, which stores the number against that participant. Notice what it doesn’t do: it doesn’t tell anyone."
+    },
+    {
+      "file": "public/js/supa.js",
+      "line": 125,
+      "title": "Every 2 seconds",
+      "description": "**Every 2 seconds**\n\nThat’s the job of cp_tick. Every two seconds, the control room and the big screen call it. It averages the latest ratings, measures the energy, and broadcasts one small message: the pulse."
+    },
+    {
+      "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+      "line": 607,
+      "title": "Average the ratings, measure the energy",
+      "description": "**Average the ratings, measure the energy**\n\nThat’s the job of cp_tick. Every two seconds, the control room and the big screen call it. It averages the latest ratings, measures the energy, and broadcasts one small message: the pulse."
+    },
+    {
+      "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+      "line": 650,
+      "title": "One small broadcast: the pulse",
+      "description": "**One small broadcast: the pulse**\n\nThat’s the job of cp_tick. Every two seconds, the control room and the big screen call it. It averages the latest ratings, measures the energy, and broadcasts one small message: the pulse."
+    },
+    {
+      "file": "public/js/stage.js",
+      "line": 70,
+      "title": "Every screen: on pulse, redraw",
+      "description": "**Every screen: on pulse, redraw**\n\nEvery screen is listening for it. On pulse updates the gauge, the bars and the chart, all drawn by the shared helpers in common.js."
+    },
+    {
+      "file": "public/js/common.js",
+      "line": 153,
+      "title": "Shared drawing code",
+      "description": "**Shared drawing code**\n\nEvery screen is listening for it. On pulse updates the gauge, the bars and the chart, all drawn by the shared helpers in common.js."
+    },
+    {
+      "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+      "line": 699,
+      "title": "One branch per action",
+      "description": "**One branch per action**\n\nChat, questions, polls and reactions all take the same route. One line to emit, one branch in cp_act, and one listener to draw the result."
+    },
+    {
+      "file": "public/js/event.js",
+      "line": 77,
+      "title": "One line to emit",
+      "description": "**One line to emit**\n\nChat, questions, polls and reactions all take the same route. One line to emit, one branch in cp_act, and one listener to draw the result."
+    },
+    {
+      "file": "public/js/event.js",
+      "line": 221,
+      "title": "Chat: emit ↑, and one listener ↓",
+      "description": "**Chat: emit ↑, and one listener ↓**\n\nChat, questions, polls and reactions all take the same route. One line to emit, one branch in cp_act, and one listener to draw the result."
+    },
+    {
+      "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+      "line": 179,
+      "title": "Tables: closed to browsers",
+      "description": "**Tables: closed to browsers**\n\nAnd the rules live in the database, not the browser. The tables are closed. A browser can only call the functions granted at the bottom of the file, and each one checks who is calling."
+    },
+    {
+      "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+      "line": 1005,
+      "title": "The entire browser API",
+      "description": "**The entire browser API**\n\nAnd the rules live in the database, not the browser. The tables are closed. A browser can only call the functions granted at the bottom of the file, and each one checks who is calling."
+    },
+    {
+      "file": "supabase/migrations/20261113000000_crowdpulse.sql",
+      "line": 671,
+      "title": "Each function checks who is calling",
+      "description": "**Each function checks who is calling**\n\nAnd the rules live in the database, not the browser. The tables are closed. A browser can only call the functions granted at the bottom of the file, and each one checks who is calling."
+    },
+    {
+      "file": "public/js/report.js",
+      "line": 9,
+      "title": "Ask the Edge Function",
+      "description": "**Ask the Edge Function**\n\nWhen the session ends, there’s one more path. report.js asks an Edge Function for the report."
+    },
+    {
+      "file": "public/js/supa.js",
+      "line": 67,
+      "title": "A plain fetch, carrying the visitor’s session",
+      "description": "**A plain fetch, carrying the visitor’s session**\n\nWhen the session ends, there’s one more path. report.js asks an Edge Function for the report."
+    },
+    {
+      "file": "supabase/functions/report/index.ts",
+      "line": 59,
+      "title": "Is this visitor allowed to see it?",
+      "description": "**Is this visitor allowed to see it?**\n\nThe function checks that you’re allowed to see it, reads the raw data with a key the browser never gets, and runs it through analytics.js, which turns ratings and chat into a grade, key moments and insights."
+    },
+    {
+      "file": "supabase/functions/report/index.ts",
+      "line": 65,
+      "title": "Raw data, read with the server’s own key",
+      "description": "**Raw data, read with the server’s own key**\n\nThe function checks that you’re allowed to see it, reads the raw data with a key the browser never gets, and runs it through analytics.js, which turns ratings and chat into a grade, key moments and insights."
+    },
+    {
+      "file": "supabase/functions/report/index.ts",
+      "line": 72,
+      "title": "Only the finished report goes back",
+      "description": "**Only the finished report goes back**\n\nThe function checks that you’re allowed to see it, reads the raw data with a key the browser never gets, and runs it through analytics.js, which turns ratings and chat into a grade, key moments and insights."
+    },
+    {
+      "file": "supabase/functions/_shared/analytics.js",
+      "line": 55,
+      "title": "Ratings and chat in; grade and insights out",
+      "description": "**Ratings and chat in; grade and insights out**\n\nThe function checks that you’re allowed to see it, reads the raw data with a key the browser never gets, and runs it through analytics.js, which turns ratings and chat into a grade, key moments and insights."
+    },
+    {
+      "file": "public/js/report.js",
+      "line": 168,
+      "title": "Charts are drawn in the browser",
+      "description": "**Charts are drawn in the browser**\n\nOnly crowd-level results come back, and Chart.js draws them."
+    }
+  ]
+}

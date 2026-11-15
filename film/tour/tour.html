@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>CrowdPulse Code Tour Director</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+  html, body { margin: 0; width: 1600px; height: 900px; overflow: clip; background: #05030f; }
+  #stage { position: relative; width: 1600px; height: 900px; overflow: clip; }
+  #cam { position: absolute; left: 0; top: 0; width: 1600px; height: 900px; transform-origin: 0 0; will-change: transform; }
+
+  /* set backdrop (same as the explainer) */
+  #bg { position: absolute; inset: -400px; background: radial-gradient(1200px 700px at 30% 20%, #1a1150 0%, transparent 60%), radial-gradient(900px 600px at 80% 80%, #0d3a4a 0%, transparent 60%), #07051a; }
+  #bg .blob { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; }
+  #bg .b1 { width: 700px; height: 700px; left: 300px; top: 250px; background: #7c5cff; animation: drift1 26s ease-in-out infinite; }
+  #bg .b2 { width: 600px; height: 600px; left: 1200px; top: 350px; background: #ff5ca8; animation: drift2 30s ease-in-out infinite; opacity: .4; }
+  #bg .b3 { width: 650px; height: 650px; left: 800px; top: 900px; background: #2ee6d6; animation: drift1 34s ease-in-out infinite reverse; opacity: .3; }
+  #bg .grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px); background-size: 48px 48px; mask-image: radial-gradient(circle at 50% 50%, black, transparent 75%); }
+  @keyframes drift1 { 50% { transform: translate(160px, -90px) scale(1.15); } }
+  @keyframes drift2 { 50% { transform: translate(-200px, 80px) scale(.9); } }
+
+  /* ---------- the editor: a VS Code style window (Dark+ colours) ---------- */
+  #code { position: absolute; left: 18px; top: 18px; width: 1010px; height: 864px; border-radius: 10px; overflow: hidden; background: #1e1e1e; color: #ccc;
+    font: 400 13px/1.4 "Segoe UI", system-ui, sans-serif; box-shadow: 0 50px 120px -30px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.14), 0 0 120px -40px rgba(124,92,255,.6); }
+  #code .tb { height: 30px; display: flex; align-items: center; background: #323233; color: #bbb; font-size: 12px; padding: 0 12px; gap: 8px; }
+  #code .tb .dot { width: 11px; height: 11px; border-radius: 50%; }
+  #code .tb .menu { margin-left: 14px; display: flex; gap: 14px; color: #aaa; }
+  #code .tb .ttl { flex: 1; text-align: center; margin-right: 150px; }
+  #code .body { display: flex; height: 812px; }
+  #code .act { width: 46px; background: #333; display: flex; flex-direction: column; align-items: center; padding-top: 6px; gap: 2px; }
+  #code .act i { width: 46px; height: 44px; display: grid; place-items: center; opacity: .45; position: relative; }
+  #code .act i svg { width: 23px; height: 23px; fill: none; stroke: #fff; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+  #code .act i.on { opacity: 1; } #code .act i.on::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: #fff; }
+  #code .exp { width: 204px; background: #252526; overflow: hidden; }
+  #code .exp .hd { height: 34px; line-height: 34px; padding-left: 18px; font-size: 11px; letter-spacing: .06em; color: #bbb; }
+  #code .exp .root { height: 22px; line-height: 22px; padding-left: 6px; font-size: 11px; font-weight: 700; color: #ccc; }
+  #code .row { height: 21px; line-height: 21px; white-space: nowrap; display: flex; align-items: center; gap: 5px; color: #ccc; position: relative; transition: background .35s, color .35s; }
+  #code .row .ch { width: 10px; font-size: 9px; color: #aaa; text-align: center; }
+  #code .row.on { background: #37373d; color: #fff; }
+  #code .row.glow { background: linear-gradient(90deg, rgba(124,92,255,.5), rgba(255,92,168,.32)); color: #fff; }
+  #code .row.glow::after { content: ''; position: absolute; right: 9px; width: 7px; height: 7px; border-radius: 50%; background: #ff5ca8; box-shadow: 0 0 10px #ff5ca8; }
+  .fi { width: 17px; font: 700 8.5px/1 "Segoe UI", sans-serif; text-align: center; flex: none; }
+  .fi.js { color: #e8d44d; } .fi.ts { color: #4b9fe0; } .fi.html { color: #e37933; } .fi.sql { color: #f55385; } .fi.json { color: #cbcb41; } .fi.css { color: #519aba; } .fi.md { color: #519aba; } .fi.dir { color: #c09553; font-size: 11px; }
+  #code .main { width: 760px; position: relative; background: #1e1e1e; }
+  .pane { position: absolute; left: 0; width: 760px; overflow: hidden; border-top: 1px solid #000; }
+  .pane .tabs { height: 34px; display: flex; background: #252526; overflow: hidden; }
+  .pane .tab { height: 34px; padding: 0 14px 0 11px; display: flex; align-items: center; gap: 6px; background: #2d2d2d; color: #969696; border-right: 1px solid #252526; font-size: 13px; white-space: nowrap; }
+  .pane .tab.on { background: #1e1e1e; color: #fff; box-shadow: inset 0 1px 0 #7c5cff; }
+  .pane .tab .x { margin-left: 6px; color: #777; font-size: 12px; }
+  .pane .crumbs { height: 22px; line-height: 22px; padding-left: 16px; font-size: 12px; color: #a0a0a0; white-space: nowrap; }
+  .pane .crumbs b { font-weight: 400; color: #e0e0e0; }
+  .pane .view { position: absolute; left: 0; right: 0; top: 56px; bottom: 0; overflow: hidden; }
+  .pane .lines { position: absolute; left: 0; top: 0; width: 100%; will-change: transform; font: 400 14px/19px Consolas, "Courier New", monospace; color: #d4d4d4; }
+  .ln { height: 19px; white-space: pre; position: relative; transition: background .25s; }
+  .ln .no { display: inline-block; box-sizing: content-box; width: 34px; padding: 0 14px 0 16px; text-align: right; color: #858585; }
+  .ln .tx { transition: opacity .4s; }
+  .pane.dim .ln:not(.hl) .tx { opacity: .32; }
+  .ln.hl { background: rgba(255,255,255,.065); box-shadow: inset 3px 0 0 #ff5ca8; }
+  .ln.hl .no { color: #e6e6e6; }
+  .ln.exec { background: rgba(255, 214, 10, .27); box-shadow: inset 3px 0 0 #ffd60a; }
+  .ln.exec .no { color: #ffd60a; }
+  .ln.exec::before { content: ''; position: absolute; left: 5px; top: 4px; border: 5.5px solid transparent; border-left: 9px solid #ffd60a; }
+  .cm { color: #6a9955; } .st { color: #ce9178; } .nu { color: #b5cea8; } .kw { color: #569cd6; } .ct { color: #c586c0; } .fn { color: #dcdcaa; }
+  .va { color: #9cdcfe; } .ty { color: #4ec9b0; } .co { color: #4fc1ff; } .rx { color: #d16969; } .tg { color: #808080; }
+  .note { position: absolute; right: 14px; max-width: 430px; padding: 7px 13px; border-radius: 11px; background: rgba(28,14,52,.96); border: 1px solid rgba(255,92,168,.7); color: #fff;
+    font: 600 14.5px/1.3 Inter, "Segoe UI", sans-serif; white-space: normal; box-shadow: 0 12px 30px -8px rgba(0,0,0,.8), 0 0 30px -8px rgba(255,92,168,.7); opacity: 0; transform: translateY(8px); transition: opacity .4s, transform .5s cubic-bezier(.2,1.3,.4,1); z-index: 3; }
+  .note.in { opacity: 1; transform: none; }
+  .note::before { content: ''; position: absolute; left: 22px; bottom: -6px; width: 10px; height: 10px; background: inherit; border-right: 1px solid rgba(255,92,168,.7); border-bottom: 1px solid rgba(255,92,168,.7); transform: rotate(45deg); }
+  .note.flat::before { display: none; }
+  .note.below::before { bottom: auto; top: -6px; transform: rotate(225deg); }
+  .pane .fade { position: absolute; right: 0; top: 0; bottom: 0; width: 40px; background: linear-gradient(90deg, transparent, #1e1e1e); pointer-events: none; z-index: 2; }
+
+  /* bottom panel: the live trace */
+  #panel { position: absolute; left: 0; bottom: 0; width: 760px; background: #1e1e1e; border-top: 1px solid #3c3c3c; overflow: hidden; }
+  #panel .ptabs { height: 30px; display: flex; align-items: center; gap: 20px; padding-left: 18px; font-size: 11px; letter-spacing: .04em; color: #8a8a8a; }
+  #panel .ptabs b { color: #e7e7e7; font-weight: 400; height: 30px; line-height: 30px; box-shadow: inset 0 -1px 0 #e7e7e7; }
+  #panel .ptabs .live { margin-left: auto; margin-right: 14px; color: #ff5ca8; letter-spacing: .1em; font-weight: 700; }
+  #panel .ptabs .live::before { content: '●'; margin-right: 6px; }
+  #rows { position: absolute; left: 0; right: 0; top: 30px; bottom: 6px; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; font: 400 13px/20px Consolas, monospace; }
+  .tr { height: 20px; white-space: nowrap; padding-left: 16px; color: #c8c8c8; display: flex; gap: 9px; transition: background .5s; }
+  .tr.idle .msg { color: #6f6f6f; font-style: italic; }
+  .tr.new { background: rgba(255,255,255,.1); }
+  .tr .t { color: #6f6f6f; } .tr .who { width: 104px; color: #9cdcfe; } .tr .dir { width: 92px; }
+  .tr.up .dir { color: #dcdcaa; } .tr.down .dir { color: #ff8cc4; } .tr.down .who { color: #ff8cc4; }
+  .tr .msg { overflow: hidden; text-overflow: ellipsis; max-width: 440px; } .tr .n { color: #ffd60a; }
+  #code .sb { height: 22px; background: #007acc; color: #fff; font-size: 12px; display: flex; align-items: center; }
+  #code .sb span { padding: 0 9px; white-space: nowrap; } #code .sb .rem { background: #16825d; height: 22px; line-height: 22px; padding: 0 11px; } #code .sb .sp { flex: 1; }
+
+  /* ---------- the app, on the right ---------- */
+  .dev { position: absolute; left: 0; top: 0; transform-origin: 0 0; opacity: 0; }
+  .dev iframe { border: 0; display: block; background: #07051a; }
+  #d-browser { border-radius: 18px; overflow: hidden; box-shadow: 0 60px 140px -30px rgba(0,0,0,.85), 0 0 0 1px rgba(255,255,255,.14), 0 0 120px -40px rgba(124,92,255,.6); background: #0f0b2a; }
+  #d-browser .bar { height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 16px; background: linear-gradient(#1d1745, #151036); border-bottom: 1px solid rgba(255,255,255,.08); }
+  #d-browser .dot { width: 12px; height: 12px; border-radius: 50%; }
+  #d-browser .url { margin-left: 18px; flex: 1; height: 26px; border-radius: 8px; background: rgba(0,0,0,.35); color: #b9b4e0; font: 500 15px/26px Inter, sans-serif; padding: 0 12px; white-space: nowrap; overflow: hidden; }
+  #d-phone { width: 418px; height: 872px; padding: 14px; border-radius: 64px; background: linear-gradient(145deg, #3b3568, #15112f 40%, #2a2453); box-shadow: 0 70px 140px -30px rgba(0,0,0,.9), inset 0 0 0 2px rgba(255,255,255,.18), 0 0 140px -30px rgba(255,92,168,.55); }
+  #d-phone iframe { width: 390px; height: 844px; border-radius: 50px; }
+  #d-phone .notch { position: absolute; left: 50%; top: 24px; width: 118px; height: 32px; border-radius: 20px; background: #000; transform: translateX(-50%); z-index: 2; }
+
+  /* "on the wire": the two directions, counted live */
+  #wire { position: absolute; left: 1046px; top: 404px; width: 292px; height: 458px; opacity: 0; color: #fff; font-family: Inter, sans-serif; }
+  #wire .node { position: absolute; left: 0; right: 0; height: 92px; border-radius: 18px; padding: 13px 16px; background: rgba(255,255,255,.055); border: 1px solid rgba(255,255,255,.14); transition: border-color .3s, box-shadow .3s; }
+  #wire .node small { display: block; font: 700 11px Inter; letter-spacing: .18em; text-transform: uppercase; color: #a7a3c9; margin-bottom: 5px; }
+  #wire .node b { font: 700 19px/1.15 'Space Grotesk', sans-serif; } #wire .node span { display: block; font-size: 12.5px; color: #c9c4f0; margin-top: 3px; }
+  #wire .top { top: 0; } #wire .bot { bottom: 0; }
+  #wire .node.hit { border-color: #ff5ca8; box-shadow: 0 0 34px -6px #ff5ca8; }
+  #wire .lane { position: absolute; top: 104px; bottom: 104px; width: 2px; background: linear-gradient(rgba(255,255,255,.3), rgba(255,255,255,.1)); }
+  #wire .lane.up { left: 18px; } #wire .lane.down { left: 272px; }
+  #wire .lane em { position: absolute; width: 124px; margin-top: -30px; font: 600 13px/1.3 Inter; font-style: normal; color: #d9d5ff; }
+  #wire .lane.up em { left: 16px; top: 32%; } #wire .lane.down em { left: -138px; top: 72%; text-align: right; }
+  #wire .lane em b { display: block; font: 700 24px 'Space Grotesk'; }
+  #wire .lane.up em b { color: #f3e7a0; } #wire .lane.down em b { color: #ff8cc4; }
+  #wire .lane::after { content: ''; position: absolute; left: -5px; border: 6px solid transparent; }
+  #wire .lane.up::after { top: -9px; border-bottom: 9px solid rgba(255,255,255,.5); } #wire .lane.down::after { bottom: -9px; border-top: 9px solid rgba(255,255,255,.5); }
+  .pkt { position: absolute; left: -6px; width: 14px; height: 14px; border-radius: 50%; }
+  .lane.up .pkt { background: #ffe680; box-shadow: 0 0 16px 3px #ffd60a; } .lane.down .pkt { background: #ff8cc4; box-shadow: 0 0 16px 3px #ff5ca8; }
+
+  /* the map of the code */
+  #map { position: absolute; left: 1046px; top: 22px; width: 536px; height: 856px; opacity: 0; color: #fff; font-family: Inter, sans-serif; }
+  #map .box { position: absolute; left: 0; right: 0; border-radius: 22px; background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.13); padding: 14px 16px; }
+  #map .box > small { font: 700 12px Inter; letter-spacing: .2em; text-transform: uppercase; color: #a7a3c9; }
+  #map .supa { top: 0; height: 256px; } #map .brow { bottom: 0; height: 326px; }
+  #map .it { opacity: 0; transform: translateY(16px) scale(.97); transition: opacity .5s, transform .6s cubic-bezier(.2,1.3,.4,1), background .4s, border-color .4s, box-shadow .4s; border-radius: 14px; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); padding: 9px 12px; display: flex; gap: 11px; align-items: center; }
+  #map .it.in { opacity: 1; transform: none; }
+  #map .it.on { background: linear-gradient(120deg, rgba(124,92,255,.6), rgba(255,92,168,.42)); border-color: rgba(255,255,255,.4); box-shadow: 0 16px 40px -18px #ff5ca8; }
+  #map .it .ic { font-size: 25px; width: 32px; text-align: center; flex: none; }
+  #map .it b { display: block; font: 700 16.5px/1.2 'Space Grotesk', sans-serif; } #map .it span { display: block; font: 500 12.5px/1.3 Consolas, monospace; color: #cfcaf5; margin-top: 2px; }
+  #map .supa .list { display: grid; gap: 8px; margin-top: 10px; }
+  #map .pages { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  #map .brow .helper { margin-top: 8px; }
+  #map .mid { position: absolute; left: 0; right: 0; top: 268px; height: 250px; }
+  #map .mid .it { position: absolute; left: 128px; width: 280px; top: 92px; justify-content: center; text-align: center; }
+  #map .arrow { position: absolute; top: 6px; bottom: 6px; width: 3px; border-radius: 2px; background: rgba(255,255,255,.28); opacity: 0; transition: opacity .5s; }
+  #map .arrow.in { opacity: 1; }
+  #map .arrow.up { left: 60px; } #map .arrow.down { right: 60px; }
+  #map .arrow::after { content: ''; position: absolute; left: -6.5px; border: 8px solid transparent; }
+  #map .arrow.up::after { top: -11px; border-bottom: 12px solid rgba(255,255,255,.6); } #map .arrow.down::after { bottom: -11px; border-top: 12px solid rgba(255,255,255,.6); }
+  #map .arrow em { position: absolute; top: 50%; margin-top: -36px; width: 112px; font: 600 13px/1.25 Inter; font-style: normal; color: #d9d5ff; }
+  #map .arrow.up em { left: -56px; top: auto; bottom: 4px; margin: 0; text-align: center; width: 116px; background: #0b0822; border-radius: 8px; padding: 3px 0; }
+  #map .arrow.down em { left: -56px; top: 4px; margin: 0; text-align: center; width: 116px; background: #0b0822; border-radius: 8px; padding: 3px 0; }
+  #map .arrow em b { font: 700 17px 'Space Grotesk'; display: block; }
+  #map .arrow.up em b { color: #f3e7a0; } #map .arrow.down em b { color: #ff8cc4; }
+  #map .arrow .pkt { left: -5.5px; opacity: 0; }
+  #map .arrow.up .pkt { background: #ffe680; box-shadow: 0 0 16px 3px #ffd60a; } #map .arrow.down .pkt { background: #ff8cc4; box-shadow: 0 0 16px 3px #ff5ca8; }
+
+  /* overlay */
+  #ov { position: absolute; inset: 0; pointer-events: none; }
+  #chapter { position: absolute; left: 64px; bottom: 56px; display: flex; align-items: flex-end; gap: 22px; opacity: 0; }
+  #chapter::before { content: ''; position: absolute; left: -90px; right: -140px; top: -70px; bottom: -70px; z-index: -1; background: radial-gradient(closest-side, rgba(5,3,15,.95), rgba(5,3,15,.8) 60%, transparent); filter: blur(6px); }
+  #chapter .num { font: 700 92px/0.8 'Space Grotesk', sans-serif; background: linear-gradient(120deg, #7c5cff, #ff5ca8 55%, #ffb547); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  #chapter .txt { padding-bottom: 4px; }
+  #chapter .k { font: 700 13px Inter, sans-serif; letter-spacing: .24em; text-transform: uppercase; color: #a7a3c9; }
+  #chapter .t { font: 700 40px/1.1 'Space Grotesk', sans-serif; letter-spacing: -.02em; color: #fff; text-shadow: 0 6px 30px rgba(0,0,0,.6); }
+  #chapter .rule { position: absolute; left: 0; right: 0; bottom: -14px; height: 3px; border-radius: 3px; background: linear-gradient(90deg, #7c5cff, #ff5ca8, transparent); transform-origin: 0 0; }
+  .lbl { position: absolute; top: 0; padding: 5px 14px; border-radius: 0 0 12px 12px; font: 700 12px Inter, sans-serif; letter-spacing: .2em; text-transform: uppercase; color: #fff; background: rgba(12,8,36,.85); border: 1px solid rgba(255,255,255,.2); border-top: 0; opacity: 0; }
+  #cursor { position: absolute; left: 0; top: 0; width: 34px; height: 34px; opacity: 0; filter: drop-shadow(0 6px 10px rgba(0,0,0,.6)); }
+  .ripple { position: absolute; width: 70px; height: 70px; margin: -35px 0 0 -35px; border-radius: 50%; border: 3px solid rgba(255,255,255,.9); animation: rip .55s ease-out forwards; }
+  @keyframes rip { from { transform: scale(.2); opacity: 1; } to { transform: scale(1.4); opacity: 0; } }
+  #title { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; opacity: 0; background: radial-gradient(circle at 50% 45%, rgba(30,20,80,.78), rgba(5,3,15,.97) 70%); }
+  #title .mark { width: 120px; height: 120px; border-radius: 36px; margin: 0 auto 30px; display: grid; place-items: center; background: linear-gradient(120deg, #7c5cff, #ff5ca8 55%, #ffb547); box-shadow: 0 0 90px -10px #ff5ca8; }
+  #title .mark svg { width: 70px; height: 70px; }
+  #title h1 { font: 700 120px/1 'Space Grotesk', sans-serif; letter-spacing: -.04em; margin: 0; }
+  #title p { font: 500 30px Inter, sans-serif; color: #c9c4f0; margin: 22px 0 0; }
+  #title p code { font: 600 28px Consolas, monospace; color: #9cdcfe; }
+  #title .cmd { display: inline-block; margin-top: 34px; font: 600 26px ui-monospace, Consolas, monospace; padding: 16px 28px; border-radius: 16px; background: rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.2); color: #fff; }
+  #title .cmd b { color: #2ee6d6; }
+  #title .line { opacity: 0; transform: translateY(26px); transition: opacity .8s, transform 1s cubic-bezier(.2,1.2,.4,1); }
+  #title.in .line { opacity: 1; transform: none; }
+  #title .l2 { transition-delay: .25s; } #title .l3 { transition-delay: .5s; } #title .l4 { transition-delay: .8s; }
+  #flash { position: absolute; inset: 0; background: white; opacity: 0; }
+  #vignette { position: absolute; inset: 0; background: radial-gradient(circle at 50% 50%, transparent 62%, rgba(0,0,0,.4)); }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="cam">
+    <div id="bg"><div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div><div class="grid"></div></div>
+
+    <div id="code">
+      <div class="tb"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span>
+        <span class="menu"><span>File</span><span>Edit</span><span>Selection</span><span>View</span><span>Go</span><span>Run</span></span><span class="ttl" id="ttl">CrowdPulse</span></div>
+      <div class="body">
+        <div class="act">
+          <i class="on"><svg viewBox="0 0 24 24"><path d="M14 3H6v18h12V7z M14 3v4h4"/></svg></i>
+          <i><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M16 16l5 5"/></svg></i>
+          <i><svg viewBox="0 0 24 24"><circle cx="6" cy="5" r="2.3"/><circle cx="6" cy="19" r="2.3"/><circle cx="18" cy="9" r="2.3"/><path d="M6 7.3v9.4 M18 11.3c0 4-12 2-12 5.4"/></svg></i>
+          <i><svg viewBox="0 0 24 24"><path d="M8 5l11 7-11 7z"/></svg></i>
+          <i><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5"/><rect x="3" y="13.5" width="7.5" height="7.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5"/><rect x="14.5" y="2" width="7" height="7" transform="rotate(12 18 5.5)"/></svg></i>
+        </div>
+        <div class="exp"><div class="hd">EXPLORER</div><div class="root">⌄ CROWDPULSE</div><div id="tree"></div></div>
+        <div class="main">
+          <div class="pane" id="p0"><div class="tabs"></div><div class="crumbs"></div><div class="view"><div class="lines"></div><div class="fade"></div></div></div>
+          <div class="pane" id="p1"><div class="tabs"></div><div class="crumbs"></div><div class="view"><div class="lines"></div><div class="fade"></div></div></div>
+          <div id="panel"><div class="ptabs"><span>PROBLEMS</span><span>OUTPUT</span><span>TERMINAL</span><b>LIVE TRACE</b><span class="live">CALLS &amp; BROADCASTS</span></div><div id="rows"><div class="tr idle"><span class="t">--:--</span><span class="msg">waiting for the app to call the database…</span></div></div></div>
+        </div>
+      </div>
+      <div class="sb"><span class="rem">⚡ Code tour</span><span>⎇ main</span><span>⊗ 0 ⚠ 0</span><span class="sp"></span><span id="sbPos">Ln 1, Col 1</span><span>Spaces: 2</span><span>UTF-8</span><span id="sbLang">JavaScript</span></div>
+    </div>
+
+    <div id="map">
+      <div class="box supa"><small>Supabase · the back end</small><div class="list">
+        <div class="it" data-m="pg"><span class="ic">🐘</span><div><b>Postgres: one SQL file</b><span>tables · security rules · cp_ functions</span></div></div>
+        <div class="it" data-m="rt"><span class="ic">📡</span><div><b>Realtime</b><span>a private channel per session</span></div></div>
+        <div class="it" data-m="fn"><span class="ic">⚡</span><div><b>Edge Function: the report</b><span>report/index.ts · analytics.js</span></div></div>
+      </div></div>
+      <div class="mid">
+        <div class="arrow up" data-m="up"><em><b>emit ↑</b>a database function</em><div class="pkt"></div></div>
+        <div class="it" data-m="supa"><div><b>supa.js</b><span>CP.connect() · the connection</span></div></div>
+        <div class="arrow down" data-m="down"><em><b>on ↓</b>a Realtime broadcast</em><div class="pkt"></div></div>
+      </div>
+      <div class="box brow"><small>Browser · public/</small>
+        <div class="it helper" data-m="common"><span class="ic">🧩</span><div><b>common.js</b><span>shared UI: gauge · chart · toasts · confetti</span></div></div>
+        <div class="pages">
+          <div class="it" data-m="pg-index"><span class="ic">🏠</span><div><b>Home</b><span>index.html · home.js</span></div></div>
+          <div class="it" data-m="pg-event"><span class="ic">📱</span><div><b>Attendee</b><span>event.html · event.js</span></div></div>
+          <div class="it" data-m="pg-control"><span class="ic">🎛️</span><div><b>Control room</b><span>control.html · control.js</span></div></div>
+          <div class="it" data-m="pg-stage"><span class="ic">🖥️</span><div><b>Big screen</b><span>stage.html · stage.js</span></div></div>
+          <div class="it" data-m="pg-admin"><span class="ic">🗂️</span><div><b>Host dashboard</b><span>admin.html · admin.js</span></div></div>
+          <div class="it" data-m="pg-report"><span class="ic">📊</span><div><b>Report</b><span>report.html · report.js</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="wire">
+      <div class="node top" data-w="db"><small>Supabase</small><b>Database functions</b><span>and Realtime broadcasts</span></div>
+      <div class="lane up"><em><b id="wUp">0</b>calls up<br>emit → function</em></div>
+      <div class="lane down"><em><b id="wDown">0</b>broadcasts down<br>→ on, every screen</em></div>
+      <div class="node bot" data-w="pages"><small>Browser</small><b>The pages</b><span>phone · control room · big screen</span></div>
+    </div>
+
+    <div class="dev" id="d-browser"><div class="bar"><span class="dot" style="background:#ff5f57"></span><span class="dot" style="background:#febc2e"></span><span class="dot" style="background:#28c840"></span><span class="url" id="url">localhost:3000</span></div><iframe id="f-desk" name="desk"></iframe></div>
+    <div class="dev" id="d-phone"><iframe id="f-phone" name="phone"></iframe></div>
+  </div>
+  <div id="ov">
+    <div id="vignette"></div>
+    <div class="lbl" id="lblCode" style="left:60px">The code</div>
+    <div class="lbl" id="lblApp" style="left:1250px">The app, running</div>
+    <div id="chapter"><div class="num"></div><div class="txt"><div class="k"></div><div class="t"></div></div><div class="rule"></div></div>
+    <div id="title"></div>
+    <svg id="cursor" viewBox="0 0 24 24"><path d="M4 2.5l15 8.6-6.6 1.6 3.8 7.1-2.7 1.4-3.8-7.1L4.6 18.6z" fill="#fff" stroke="#0b0820" stroke-width="1.4" stroke-linejoin="round"/></svg>
+    <div id="flash"></div>
+  </div>
+</div>
+<script type="module">
+  import { buildReport } from '/src/supabase/functions/_shared/analytics.js';
+  window.__buildReport = buildReport; // the real report code, run on the fixture session
+</script>
+<script src="/studio/fakesupa.js"></script>
+<script src="/studio/tour.js"></script>
+</body>
+</html>

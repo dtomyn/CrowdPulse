@@ -6,11 +6,11 @@ film/tour/fakesupa.js, an in-page stand-in for the Supabase project (same databa
 Every call and broadcast the app makes is traced, and the traces move the editor's execution pointer.
 The voice, music bed, sound effects and mixing are shared with the explainer (film/render.py).
 
-Uses the same virtualenv as the explainer (playwright, imageio-ffmpeg, kokoro-onnx, soundfile, numpy):
-  C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_tour.py --storyboard   storyboard, script, captions, CodeTour
-  C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_tour.py --preview      quick 960x540 video
-  C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_tour.py                1440p master (--share adds a 1080p copy)
-  C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_tour.py --shots 42 97.5   stills at those seconds, for checking a scene
+Runs in the project's virtual environment (`npm run film:setup`); add --docker to run in the film/Dockerfile image:
+  npm run film:tour -- --storyboard   storyboard, script, captions, CodeTour
+  npm run film:tour -- --preview      quick 960x540 video
+  npm run film:tour                   1440p master (--share adds a 1080p copy)
+  npm run film:tour -- --shots 42 97.5   stills at those seconds, for checking a scene
 Outputs go to film/out as crowdpulse-code-tour*. The stops in the film are also written as a VS Code CodeTour
 (.tours/crowdpulse-code-tour.tour), so the same walk can be taken in the real editor.
 """
@@ -100,7 +100,7 @@ def start_server():
 
 
 def open_director(playwright, port, scale, code, model_dir):
-    browser = playwright.chromium.launch(channel="msedge", headless=True, args=["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required"])
+    browser = base.launch_browser(playwright)
     context = browser.new_context(viewport={"width": base.LAYOUT[0], "height": base.LAYOUT[1]}, device_scale_factor=scale)
     context.add_init_script(path=str(FILM / "studio" / "shim.js"))
     page = context.new_page()
@@ -227,9 +227,7 @@ def main():
     ap.add_argument("--share", action="store_true", help="also write a 1080p copy of the master")
     args = ap.parse_args()
     args.code = None
-    model_dir = pathlib.Path(args.kokoro)
-    if not (model_dir / "kokoro-v1.0.onnx").exists():
-        raise SystemExit(f"Kokoro model files not found in {model_dir}")
+    model_dir = base.voice_model(args.kokoro)
     base.OUT.mkdir(parents=True, exist_ok=True)
     started = time.time() - 1
     server, port = start_server()

@@ -1,0 +1,4 @@
+# The image only needs these two files; the project is mounted when a film is rendered.
+*
+!requirements.txt
+!get_voice.py

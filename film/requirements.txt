@@ -1,0 +1,7 @@
+# Python packages the film scripts need (film/render*.py). `npm run film:setup` installs them into .venv/.
+playwright==1.64.1
+imageio-ffmpeg==0.7.0
+kokoro-onnx==0.6.1
+onnxruntime==1.31.1
+soundfile==0.14.0
+numpy==2.5.4

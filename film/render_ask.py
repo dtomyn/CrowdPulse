@@ -6,12 +6,12 @@ virtual clock, filmed one exact frame at a time. Nothing here calls Claude: the 
 them through the tool's real checks on every render. The voice, music bed, sound effects and mixing are shared
 with the other films (film/render.py).
 
-Uses the same virtualenv as the other films (playwright, imageio-ffmpeg, kokoro-onnx, soundfile, numpy):
-  C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_ask.py --storyboard   storyboard, script, captions, YouTube text
-  C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_ask.py --preview      quick 960x540 video
-  C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_ask.py                1440p master (--share adds a 1080p copy)
-  C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_ask.py --shots 42 97.5   stills at those seconds, for checking a scene
-  C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_ask.py --record --storyboard   record the takes again first (needs Claude Code)
+Runs in the project's virtual environment (`npm run film:setup`); add --docker to run in the film/Dockerfile image:
+  npm run film:ask -- --storyboard   storyboard, script, captions, YouTube text
+  npm run film:ask -- --preview      quick 960x540 video
+  npm run film:ask                   1440p master (--share adds a 1080p copy)
+  npm run film:ask -- --shots 42 97.5   stills at those seconds, for checking a scene
+  npm run film:ask -- --record --storyboard   record the takes again first (needs Claude Code)
 Outputs go to film/out as crowdpulse-ask*.
 """
 import argparse
@@ -63,7 +63,7 @@ def start_server():
 
 
 def open_director(playwright, port, scale, code, model_dir):
-    browser = playwright.chromium.launch(channel="msedge", headless=True, args=["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required"])
+    browser = base.launch_browser(playwright)
     context = browser.new_context(viewport={"width": base.LAYOUT[0], "height": base.LAYOUT[1]}, device_scale_factor=scale, color_scheme="dark")
     context.add_init_script(path=str(FILM / "studio" / "shim.js"))
     page = context.new_page()
@@ -206,9 +206,7 @@ def main():
     ap.add_argument("--record", action="store_true", help="record the takes again with Claude Code before rendering")
     args = ap.parse_args()
     args.code = None
-    model_dir = pathlib.Path(args.kokoro)
-    if not (model_dir / "kokoro-v1.0.onnx").exists():
-        raise SystemExit(f"Kokoro model files not found in {model_dir}")
+    model_dir = base.voice_model(args.kokoro)
     if args.record:
         subprocess.run(["node", "film/ask/record.mjs", "--all"], cwd=str(ROOT), check=True)
     base.OUT.mkdir(parents=True, exist_ok=True)

@@ -21,6 +21,9 @@ film/vo/made.json
 film/out/*.mp4
 film/out/timeline.json
 
+# Kokoro voice model, downloaded by `npm run film:setup`
+film/models/
+
 # Ask CrowdPulse: saved answers
 ask/.cache/
 

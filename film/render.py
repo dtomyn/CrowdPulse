@@ -2,14 +2,16 @@
 
 The scenes, camera moves and narration live in film/studio/director.js. The director page embeds the real app pages
 (phone, host browser, projector) in iframes, runs them on a virtual clock, and feeds them a scripted audience, so every
-frame is deterministic. The voice is Kokoro af_heart, the same voice and settings as C:/DevSource/IRISIdeas.
+frame is deterministic. The voice is Kokoro af_heart.
 
-Requires the IRISIdeas virtualenv (playwright, imageio-ffmpeg, kokoro-onnx, soundfile, numpy) and its Kokoro model files:
-  C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render.py --storyboard   storyboard, script and captions (a few minutes)
-  C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render.py --preview      quick 960x540 video
-  C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render.py                1440p master + everything above (--share adds a 1080p copy)
+Runs in the project's virtual environment (.venv, made by `npm run film:setup` from film/requirements.txt), with the
+Kokoro model files that setup downloads to film/models/kokoro. Add --docker to run in the image from film/Dockerfile:
+  npm run film:explainer -- --storyboard   storyboard, script and captions (a few minutes)
+  npm run film:explainer -- --preview      quick 960x540 video
+  npm run film:explainer                   1440p master + everything above (--share adds a 1080p copy)
 Options: --code picks the session whose report is shown and --data the folder with its db.json (defaults: the
-fixture built by `node film/fixture.js`). --kokoro DIR points at the voice model files.
+fixture built by `node film/fixture.js`). --kokoro DIR (or KOKORO_DIR) points at the voice model files, and
+FILM_BROWSER picks the browser: msedge (the default on Windows), chrome, or chromium (Playwright's own, the default elsewhere).
 Narration is cached per line in film/vo and only remade when a line changes. A real recording saved as
 film/vo/recorded/<id>.wav (ids in script.md) replaces the synthetic line, and the picture retimes to fit it.
 """
@@ -28,6 +30,8 @@ import sys
 import time
 import urllib.request
 
+sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
+import get_voice
 import imageio_ffmpeg
 import numpy as np
 import soundfile
@@ -41,8 +45,8 @@ CACHE = FILM / ".cache"
 NAME = "crowdpulse-explainer"
 LAYOUT = (1600, 900)
 SCALE_MASTER, SCALE_PREVIEW, SCALE_BOARD = 1.6, 0.6, 0.8  # 2560x1440, 960x540, 1280x720
-VOICE, VOICE_SPEED, VOICE_RATE = "af_heart", 0.97, 24000  # same as IRISIdeas scripts/render_explainer.py
-DEFAULT_KOKORO = pathlib.Path("C:/DevSource/IRISIdeas/.venv/kokoro")
+VOICE, VOICE_SPEED, VOICE_RATE = "af_heart", 0.97, 24000
+DEFAULT_KOKORO = get_voice.model_dir()  # film/models/kokoro unless KOKORO_DIR says otherwise
 RATE = 48000
 THUMBNAIL_BOARD = "Reaction storm"
 # words the voice says better when spelled the way they sound
@@ -51,6 +55,14 @@ CAPTION_MAX = 84
 
 
 # ---------------------------------------------------------------- voice
+def voice_model(given):
+    """The folder with the Kokoro model files, or an error that says how to get them."""
+    folder = pathlib.Path(given)
+    if get_voice.missing(folder):
+        raise SystemExit(f"Kokoro model files not found in {folder}. Run `npm run film:setup` (or `python film/get_voice.py`) to download them.")
+    return folder
+
+
 def make_voice(lines, model_dir):
     VO.mkdir(parents=True, exist_ok=True)
     (VO / "recorded").mkdir(exist_ok=True)
@@ -109,8 +121,19 @@ def start_server(source=FIXTURE):
     raise SystemExit("the app server did not start: " + proc.stderr.read().decode(errors="replace"))
 
 
+def launch_browser(playwright):
+    """Edge with the GPU on Windows, Playwright's own Chromium elsewhere (Linux, macOS, Docker). FILM_BROWSER overrides."""
+    channel = os.environ.get("FILM_BROWSER") or ("msedge" if sys.platform == "win32" else "chromium")
+    flags = ["--autoplay-policy=no-user-gesture-required"]
+    if sys.platform == "win32":
+        flags += ["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist"]
+    elif hasattr(os, "geteuid") and os.geteuid() == 0:
+        flags += ["--no-sandbox"]  # Chromium's sandbox can't start as root, which is what a container runs as
+    return playwright.chromium.launch(channel=None if channel == "chromium" else channel, headless=True, args=flags)
+
+
 def open_director(playwright, port, scale, code, model_dir):
-    browser = playwright.chromium.launch(channel="msedge", headless=True, args=["--use-angle=d3d11", "--enable-gpu", "--ignore-gpu-blocklist", "--autoplay-policy=no-user-gesture-required"])
+    browser = launch_browser(playwright)
     context = browser.new_context(viewport={"width": LAYOUT[0], "height": LAYOUT[1]}, device_scale_factor=scale)
     context.add_init_script(path=str(FILM / "studio" / "shim.js"))
     page = context.new_page()
@@ -194,7 +217,7 @@ def write_captions(tl):
 
 def write_script(tl):
     parts = [f"# CrowdPulse explainer: narration script\n\n{clock(tl['total'])} in all. Voice: Kokoro `{VOICE}` at speed {VOICE_SPEED} "
-             f"(the IRISIdeas explainer voice). Written by `film/render.py` from `film/studio/director.js`. "
+             f"Written by `film/render.py` from `film/studio/director.js`. "
              "To replace a line with a real recording, save it as `film/vo/recorded/<id>.wav`.\n"]
     for ch in tl["chapters"]:
         parts.append(f"\n## {clock(ch['at'])} {ch['title']}\n\n**Shows:** {ch['feature']}\n\n**Camera:** {ch['camera']}\n\n**Sound:** {ch['sound']}\n")
@@ -535,9 +558,7 @@ def main():
             raise SystemExit("nothing to remix: render the video first")
         finish(imageio_ffmpeg.get_ffmpeg_exe(), silent, json.loads(saved.read_text(encoding="utf-8")), args.preview, args.share)
         return
-    model_dir = pathlib.Path(args.kokoro)
-    if not (model_dir / "kokoro-v1.0.onnx").exists():
-        raise SystemExit(f"Kokoro model files not found in {model_dir}")
+    model_dir = voice_model(args.kokoro)
     OUT.mkdir(parents=True, exist_ok=True)
     CACHE.mkdir(parents=True, exist_ok=True)
     proc, port = start_server(args.data)

@@ -13,6 +13,10 @@
     "build": "node scripts/build.mjs",
     "ask": "node ask/server.mjs",
     "test:ask": "node --test ask/test/",
+    "film:setup": "node scripts/film.mjs setup",
+    "film:explainer": "node scripts/film.mjs explainer",
+    "film:tour": "node scripts/film.mjs tour",
+    "film:ask": "node scripts/film.mjs ask",
     "db:start": "supabase start",
     "db:reset": "supabase db reset"
   },

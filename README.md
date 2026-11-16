@@ -189,6 +189,26 @@ How it's kept safe:
 
 Expression and attention estimates are approximate. Treat them as a hint alongside the ratings, not a verdict. The demo audience simulator produces passive data too, so you can preview everything without real people.
 
+## Rendering the films
+
+The three films below are rendered by Python scripts in `film/`. You only need this to re-render a film, not to run CrowdPulse. Set it up once (needs [Python](https://www.python.org/downloads/) 3.12 or newer, and `npm install`):
+
+```bash
+npm run film:setup
+```
+
+This creates a Python virtual environment in `.venv/`, installs the packages pinned in `film/requirements.txt` into it, and downloads the Kokoro voice model (about 350 MB) to `film/models/kokoro/`, checked against fixed SHA-256 hashes (`film/get_voice.py`). Nothing is installed outside the project folder. The `npm run film:…` commands below then run each script with `.venv`'s Python.
+
+On Windows the films are shot in Microsoft Edge, which is how the published videos were made. On macOS and Linux, setup also downloads Playwright's own Chromium and the films use that. Set `FILM_BROWSER` to `msedge`, `chrome` or `chromium` to choose.
+
+**Or use Docker** instead of installing Python: add `--docker` to any film command, for example:
+
+```bash
+npm run film:tour -- --docker --storyboard
+```
+
+The first run builds an image (`film/Dockerfile`) holding Python with the same packages in a virtual environment, Node, Chromium and the voice model, then runs the script in it with the project folder mounted, so the results land in `film/out/` as usual. The picture differs a little from the published videos, because Linux Chromium draws text and emoji with different fonts and without a GPU.
+
 ## Explainer video
 
 A narrated walkthrough of the app, filmed from the real pages one exact frame at a time, lives in `film/`. Watch it at https://youtu.be/wk60oe0w6Aw.
@@ -200,15 +220,16 @@ A narrated walkthrough of the app, filmed from the real pages one exact frame at
 - `film/studio/shim.js`: runs every page on a virtual clock (timers, animation frames and CSS animations) so frames are deterministic
 - `film/studio/fakeserver.js`: an in-page stand-in for the socket server with a scripted audience
 - `film/render.py`: makes the voice, renders the frames, adds a music bed and sound effects, and mixes everything
+- `film/get_voice.py`, `film/requirements.txt`, `film/Dockerfile`, `scripts/film.mjs`: the setup described above
 
-The voice is Kokoro `af_heart` at speed 0.97, the same as the IRISIdeas explainer. The script uses that project's virtualenv and model files:
+The voice is Kokoro `af_heart` at speed 0.97. After the setup in [Rendering the films](#rendering-the-films):
 
 ```bash
-C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render.py --storyboard
+npm run film:explainer -- --storyboard
 ```
 
 ```bash
-C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render.py
+npm run film:explainer
 ```
 
 The report scene shows a reproducible 30-minute session built by `node film/fixture.js` (saved as `film/fixture/db.json`). It runs every second through the app's own passive-signal code, so the report includes passive signals, "engaged but critical" and "polite but distracted" stretches, and laughter peaks. Use `--data` and `--code` to film another session instead.
@@ -226,11 +247,11 @@ A second film, for people who want to understand the code. Watch it at https://w
 The app pages in the film are the real ones from `public/`. Every database call and broadcast they make is traced, and the trace moves the editor: a line turns yellow when the app really makes that call or receives that broadcast. The SQL shown is the real migration, but it is the stand-in that runs, so if you change a database function, change `fakesupa.js` to match. The report scene runs the real `analytics.js` on the session in `film/fixture/db.json`.
 
 ```bash
-C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_tour.py --storyboard
+npm run film:tour -- --storyboard
 ```
 
 ```bash
-C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_tour.py
+npm run film:tour
 ```
 
 `--storyboard` writes `film/out/crowdpulse-code-tour-storyboard.html`, the script and captions in a few minutes. The default run writes the 2560×1440 video `film/out/crowdpulse-code-tour.mp4` (add `--share` for a 1080p copy). `--preview` makes a quick 960×540 version, and `--shots 42 97.5` saves stills at those seconds to `film/.cache/tour/` for checking a scene. Code is found by its text, not its line number (for example `E.open(0, EV, 'function join() {')`), and the render reports an error if a line the film points at no longer exists.
@@ -247,16 +268,16 @@ A third film, about the Ask CrowdPulse tool below. Watch it at https://youtu.be/
 - `film/render_ask.py`: renders the frames and reuses the explainer's voice, music and mixing from `film/render.py`
 
 ```bash
-C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_ask.py --storyboard
+npm run film:ask -- --storyboard
 ```
 
 ```bash
-C:/DevSource/IRISIdeas/.venv/Scripts/python.exe film/render_ask.py
+npm run film:ask
 ```
 
 `--storyboard` writes `film/out/crowdpulse-ask-storyboard.html`, the script, captions and YouTube text in a few minutes. The default run writes the 2560×1440 video `film/out/crowdpulse-ask.mp4` (add `--share` for a 1080p copy). `--preview` makes a quick 960×540 version, and `--shots 42 97.5` saves stills at those seconds to `film/.cache/ask/`.
 
-Rendering never calls Claude. The pages in the film are the real ones from `ask/public/`, and the answers are the recorded takes and the prepared examples. If the code or the map has changed, a quoted line may have moved on: the film then shows that step as unverified, exactly as the tool would. Record the takes again with `node film/ask/record.mjs --all` (or add `--record` to the render), which needs the Claude Code CLI. The numbers the narrator says (parts of the app, seconds to the first step) are read from the map and the takes, so they stay true after a new recording. The "planted mistakes" scene adds two bad steps on purpose (`PLANTED` in `film/ask/server.mjs`) and labels them on screen.
+Rendering never calls Claude. The pages in the film are the real ones from `ask/public/`, and the answers are the recorded takes and the prepared examples. If the code or the map has changed, a quoted line may have moved on: the film then shows that step as unverified, exactly as the tool would. Record the takes again with `node film/ask/record.mjs --all` (or add `--record` to the render), which needs the Claude Code CLI and so doesn't work with `--docker`. The numbers the narrator says (parts of the app, seconds to the first step) are read from the map and the takes, so they stay true after a new recording. The "planted mistakes" scene adds two bad steps on purpose (`PLANTED` in `film/ask/server.mjs`) and labels them on screen.
 
 ## Ask CrowdPulse
 
